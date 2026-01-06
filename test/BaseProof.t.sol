@@ -113,3 +113,17 @@ contract BaseProofTest is Test {
         vm.expectRevert(abi.encodeWithSelector(BaseProof.DuplicateInBatch.selector, 1));
         baseProof.submitProofBatch(proofHashes);
     }
+    function test_RevertWhen_BatchContainsExisting() public {
+        bytes32 proofHash = keccak256("existing");
+        
+        vm.prank(user1);
+        baseProof.submitProof(proofHash);
+
+        bytes32[] memory proofHashes = new bytes32[](2);
+        proofHashes[0] = proofHash;
+        proofHashes[1] = keccak256("new");
+
+        vm.prank(user1);
+        vm.expectRevert(abi.encodeWithSelector(BaseProof.ProofAlreadySubmitted.selector, proofHash));
+        baseProof.submitProofBatch(proofHashes);
+}
