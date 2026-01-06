@@ -1,3 +1,4 @@
+// Optimized Test Suite
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
@@ -34,7 +35,7 @@ contract BaseProofTest is Test {
         baseProof.submitProof(proofHash);
 
         vm.prank(user2);
-        vm.expectRevert("BaseProof: proof already submitted");
+        vm.expectRevert(abi.encodeWithSelector(BaseProof.ProofAlreadySubmitted.selector, proofHash));
         baseProof.submitProof(proofHash);
     }
 
@@ -75,8 +76,55 @@ contract BaseProofTest is Test {
         baseProof.submitProof(proofHash);
 
         vm.prank(user2);
-        vm.expectRevert("BaseProof: proof already submitted");
+        vm.expectRevert(abi.encodeWithSelector(BaseProof.ProofAlreadySubmitted.selector, proofHash));
         baseProof.submitProof(proofHash);
     }
 }
 
+
+    // Batch Submission Tests
+    function test_SubmitProofBatch() public {
+        bytes32[] memory proofHashes = new bytes32[](3);
+        proofHashes[0] = keccak256("batch 1");
+        proofHashes[1] = keccak256("batch 2");
+        proofHashes[2] = keccak256("batch 3");
+
+        vm.prank(user1);
+        baseProof.submitProofBatch(proofHashes);
+
+        assertTrue(baseProof.isProofSubmitted(proofHashes[0]));
+        assertTrue(baseProof.isProofSubmitted(proofHashes[1]));
+        assertTrue(baseProof.isProofSubmitted(proofHashes[2]));
+        assertEq(baseProof.userProofCount(user1), 3);
+        assertEq(baseProof.totalProofs(), 3);
+    }
+    function test_RevertWhen_EmptyBatch() public {
+        bytes32[] memory emptyBatch = new bytes32[](0);
+        
+        vm.prank(user1);
+        vm.expectRevert(BaseProof.EmptyBatch.selector);
+        baseProof.submitProofBatch(emptyBatch);
+    }
+    function test_RevertWhen_DuplicateInBatch() public {
+        bytes32[] memory proofHashes = new bytes32[](2);
+        proofHashes[0] = keccak256("duplicate");
+        proofHashes[1] = keccak256("duplicate");
+
+        vm.prank(user1);
+        vm.expectRevert(abi.encodeWithSelector(BaseProof.DuplicateInBatch.selector, 1));
+        baseProof.submitProofBatch(proofHashes);
+    }
+    function test_RevertWhen_BatchContainsExisting() public {
+        bytes32 proofHash = keccak256("existing");
+        
+        vm.prank(user1);
+        baseProof.submitProof(proofHash);
+
+        bytes32[] memory proofHashes = new bytes32[](2);
+        proofHashes[0] = proofHash;
+        proofHashes[1] = keccak256("new");
+
+        vm.prank(user1);
+        vm.expectRevert(abi.encodeWithSelector(BaseProof.ProofAlreadySubmitted.selector, proofHash));
+        baseProof.submitProofBatch(proofHashes);
+}

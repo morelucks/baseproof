@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 /// @title BaseProof
 /// @notice Trust-minimized action proofs on Base
 /// @dev Stores cryptographic proof hashes and prevents duplicates
+/// @dev Optimized for gas efficiency on L2
 contract BaseProof {
     /// @notice Custom error for duplicate proof submission
     error ProofAlreadySubmitted(bytes32 proofHash);
@@ -57,18 +58,20 @@ contract BaseProof {
     /// @notice Submit a proof hash
     /// @param proofHash The hash of the proof to submit
     /// @dev Reverts if the proof hash has already been submitted
+    /// @dev Emits ProofSubmitted event
     function submitProof(bytes32 proofHash) external {
         ProofData storage data = proofData[proofHash];
         if (data.submitted) revert ProofAlreadySubmitted(proofHash);
 
         data.submitted = true;
-        data.timestamp = uint128(block.timestamp);
+        uint256 currentTimestamp = block.timestamp;
+        data.timestamp = uint128(currentTimestamp);
         data.userIndex = userProofCount[msg.sender];
         
         userProofCount[msg.sender]++;
         totalProofs++;
 
-        emit ProofSubmitted(msg.sender, proofHash, block.timestamp);
+        emit ProofSubmitted(msg.sender, proofHash, currentTimestamp);
     }
 
     /// @notice Submit multiple proof hashes in a single transaction
