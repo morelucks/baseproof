@@ -7,10 +7,10 @@ pragma solidity ^0.8.13;
 contract BaseProof {
     /// @notice Custom error for duplicate proof submission
     error ProofAlreadySubmitted(bytes32 proofHash);
-    
+
     /// @notice Custom error for empty batch submission
     error EmptyBatch();
-    
+
     /// @notice Custom error for duplicate proof in batch
     error DuplicateInBatch(uint256 index);
 
@@ -18,28 +18,20 @@ contract BaseProof {
     /// @param user The address that submitted the proof
     /// @param proofHash The hash of the proof
     /// @param timestamp The block timestamp when the proof was submitted
-    event ProofSubmitted(
-        address indexed user,
-        bytes32 indexed proofHash,
-        uint256 timestamp
-    );
+    event ProofSubmitted(address indexed user, bytes32 indexed proofHash, uint256 timestamp);
 
     /// @notice Emitted when multiple proofs are submitted in a batch
     /// @param user The address that submitted the proofs
     /// @param count The number of proofs submitted
     /// @param timestamp The block timestamp when the proofs were submitted
-    event BatchProofSubmitted(
-        address indexed user,
-        uint256 count,
-        uint256 timestamp
-    );
+    event BatchProofSubmitted(address indexed user, uint256 count, uint256 timestamp);
 
     /// @notice Packed struct for proof data (gas-optimized storage)
     /// @dev Uses uint128 for counts to save storage (max ~3.4e38 proofs)
     struct ProofData {
-        bool submitted;      // 1 byte
-        uint128 timestamp;   // 16 bytes - block timestamp when submitted
-        uint128 userIndex;   // 16 bytes - index in user's proof list (optional)
+        bool submitted; // 1 byte
+        uint128 timestamp; // 16 bytes - block timestamp when submitted
+        uint128 userIndex; // 16 bytes - index in user's proof list (optional)
     }
 
     /// @notice Mapping to track submitted proof hashes with metadata
@@ -64,7 +56,7 @@ contract BaseProof {
         data.submitted = true;
         data.timestamp = uint128(block.timestamp);
         data.userIndex = userProofCount[msg.sender];
-        
+
         userProofCount[msg.sender]++;
         totalProofs++;
 
@@ -87,9 +79,9 @@ contract BaseProof {
         for (uint256 i = 0; i < length; ++i) {
             bytes32 proofHash = proofHashes[i];
             ProofData storage data = proofData[proofHash];
-            
+
             if (data.submitted) revert ProofAlreadySubmitted(proofHash);
-            
+
             // Check for duplicates within the batch
             for (uint256 j = i + 1; j < length; ++j) {
                 if (proofHash == proofHashes[j]) revert DuplicateInBatch(j);

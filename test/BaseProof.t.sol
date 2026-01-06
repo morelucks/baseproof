@@ -18,7 +18,7 @@ contract BaseProofTest is Test {
 
     function test_SubmitProof() public {
         bytes32 proofHash = keccak256("test proof");
-        
+
         vm.prank(user1);
         baseProof.submitProof(proofHash);
 
@@ -29,7 +29,7 @@ contract BaseProofTest is Test {
 
     function test_RevertWhen_DuplicateProof() public {
         bytes32 proofHash = keccak256("test proof");
-        
+
         vm.prank(user1);
         baseProof.submitProof(proofHash);
 
@@ -41,7 +41,7 @@ contract BaseProofTest is Test {
     function test_MultipleProofsFromSameUser() public {
         bytes32 proofHash1 = keccak256("proof 1");
         bytes32 proofHash2 = keccak256("proof 2");
-        
+
         vm.prank(user1);
         baseProof.submitProof(proofHash1);
 
@@ -54,11 +54,11 @@ contract BaseProofTest is Test {
 
     function test_EventEmitted() public {
         bytes32 proofHash = keccak256("test proof");
-        
+
         vm.prank(user1);
         vm.expectEmit(true, true, false, true);
         emit BaseProof.ProofSubmitted(user1, proofHash, block.timestamp);
-        
+
         baseProof.submitProof(proofHash);
     }
 

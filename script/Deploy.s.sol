@@ -13,7 +13,7 @@ contract Deploy is Script {
         BaseProof baseProof = new BaseProof();
 
         vm.stopBroadcast();
-        
+
         return baseProof;
     }
 }
