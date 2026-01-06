@@ -104,3 +104,12 @@ contract BaseProofTest is Test {
         vm.expectRevert(BaseProof.EmptyBatch.selector);
         baseProof.submitProofBatch(emptyBatch);
     }
+    function test_RevertWhen_DuplicateInBatch() public {
+        bytes32[] memory proofHashes = new bytes32[](2);
+        proofHashes[0] = keccak256("duplicate");
+        proofHashes[1] = keccak256("duplicate");
+
+        vm.prank(user1);
+        vm.expectRevert(abi.encodeWithSelector(BaseProof.DuplicateInBatch.selector, 1));
+        baseProof.submitProofBatch(proofHashes);
+    }
