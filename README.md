@@ -1,6 +1,6 @@
 # BaseProof
 
-## Trust‑Minimized Action Proofs on Base
+## Trust‑Minimized Action Proofs on Base 🛡️
 
 BaseProof is a decentralized application that allows users to generate and verify cryptographic proofs that a specific action occurred — without relying on blind trust in centralized services.
 
