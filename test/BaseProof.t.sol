@@ -80,3 +80,5 @@ contract BaseProofTest is Test {
     }
 }
 
+
+    // Batch Submission Tests
