@@ -82,3 +82,18 @@ contract BaseProofTest is Test {
 
 
     // Batch Submission Tests
+    function test_SubmitProofBatch() public {
+        bytes32[] memory proofHashes = new bytes32[](3);
+        proofHashes[0] = keccak256("batch 1");
+        proofHashes[1] = keccak256("batch 2");
+        proofHashes[2] = keccak256("batch 3");
+
+        vm.prank(user1);
+        baseProof.submitProofBatch(proofHashes);
+
+        assertTrue(baseProof.isProofSubmitted(proofHashes[0]));
+        assertTrue(baseProof.isProofSubmitted(proofHashes[1]));
+        assertTrue(baseProof.isProofSubmitted(proofHashes[2]));
+        assertEq(baseProof.userProofCount(user1), 3);
+        assertEq(baseProof.totalProofs(), 3);
+    }
