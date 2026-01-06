@@ -63,13 +63,14 @@ contract BaseProof {
         if (data.submitted) revert ProofAlreadySubmitted(proofHash);
 
         data.submitted = true;
-        data.timestamp = uint128(block.timestamp);
+        uint256 currentTimestamp = block.timestamp;
+        data.timestamp = uint128(currentTimestamp);
         data.userIndex = userProofCount[msg.sender];
         
         userProofCount[msg.sender]++;
         totalProofs++;
 
-        emit ProofSubmitted(msg.sender, proofHash, block.timestamp);
+        emit ProofSubmitted(msg.sender, proofHash, currentTimestamp);
     }
 
     /// @notice Submit multiple proof hashes in a single transaction
