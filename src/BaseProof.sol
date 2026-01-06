@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 /// @title BaseProof
 /// @notice Trust-minimized action proofs on Base
 /// @dev Stores cryptographic proof hashes and prevents duplicates
+/// @dev Optimized for gas efficiency on L2
 contract BaseProof {
     /// @notice Custom error for duplicate proof submission
     error ProofAlreadySubmitted(bytes32 proofHash);
