@@ -97,3 +97,10 @@ contract BaseProofTest is Test {
         assertEq(baseProof.userProofCount(user1), 3);
         assertEq(baseProof.totalProofs(), 3);
     }
+    function test_RevertWhen_EmptyBatch() public {
+        bytes32[] memory emptyBatch = new bytes32[](0);
+        
+        vm.prank(user1);
+        vm.expectRevert(BaseProof.EmptyBatch.selector);
+        baseProof.submitProofBatch(emptyBatch);
+    }
