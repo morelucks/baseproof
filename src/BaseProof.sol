@@ -143,3 +143,8 @@ contract BaseProof {
     }
 }
 
+    function transferOwnership(address newOwner) external {
+        if (msg.sender != owner) revert Unauthorized();
+        owner = newOwner;
+    }
+}
