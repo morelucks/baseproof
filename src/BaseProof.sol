@@ -156,4 +156,8 @@ contract BaseProof {
         if (msg.sender != owner) revert Unauthorized();
         verifier = _verifier;
     }
+
+    function DOMAIN_SEPARATOR() public view returns (bytes32) {
+        return keccak256(abi.encode(DOMAIN_TYPEHASH, keccak256(bytes("BaseProof")), keccak256(bytes("1")), block.chainid, address(this)));
+    }
 }
