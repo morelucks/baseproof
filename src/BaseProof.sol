@@ -6,6 +6,8 @@ pragma solidity ^0.8.13;
 /// @dev Stores cryptographic proof hashes and prevents duplicates
 /// @dev Optimized for gas efficiency on L2
 contract BaseProof {
+    address public owner;
+    address public verifier;
     /// @notice Custom error for duplicate proof submission
     error ProofAlreadySubmitted(bytes32 proofHash);
     
