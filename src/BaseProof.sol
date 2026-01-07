@@ -95,7 +95,7 @@ contract BaseProof {
     /// @param proofHashes Array of proof hashes to submit
     /// @dev More gas-efficient than multiple individual submissions
     /// @dev Reverts if any proof hash has already been submitted or if duplicates exist in batch
-    function submitProofBatch(bytes32[] calldata proofHashes) external {
+    function submitProofBatch(bytes32[] calldata proofHashes, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
         uint256 length = proofHashes.length;
         if (length == 0) revert EmptyBatch();
 
