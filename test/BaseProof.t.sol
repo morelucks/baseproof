@@ -130,4 +130,9 @@ contract BaseProofTest is Test {
         vm.prank(user1);
         vm.expectRevert(abi.encodeWithSelector(BaseProof.ProofAlreadySubmitted.selector, proofHash));
         baseProof.submitProofBatch(proofHashes);
+
+    function _sign(bytes32 hash, uint256 deadline) internal view returns (uint8 v, bytes32 r, bytes32 s) {
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", baseProof.DOMAIN_SEPARATOR(), keccak256(abi.encode(baseProof.PROOF_TYPEHASH(), hash, deadline))));
+        (v, r, s) = vm.sign(verPrivateKey, digest);
+    }
 }
