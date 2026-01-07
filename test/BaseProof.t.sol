@@ -12,9 +12,12 @@ contract BaseProofTest is Test {
 
     address public user1 = address(0x1);
     address public user2 = address(0x2);
+    uint256 public verPrivateKey = 0x1234;
+    address public verifier;
 
     function setUp() public {
-        baseProof = new BaseProof();
+        verifier = vm.addr(verPrivateKey);
+        baseProof = new BaseProof(verifier);
     }
 
     function test_SubmitProof() public {
