@@ -142,4 +142,11 @@ contract BaseProofTest is Test {
         vm.expectRevert(BaseProof.InvalidSignature.selector);
         baseProof.submitProof(h, dl, v, r, s);
     }
+
+    function test_RevertWhen_Expired() public {
+        bytes32 h = keccak256("old"); uint256 dl = block.timestamp - 1;
+        (uint8 v, bytes32 r, bytes32 s) = _sign(h, dl);
+        vm.expectRevert(BaseProof.DeadlineExpired.selector);
+        baseProof.submitProof(h, dl, v, r, s);
+    }
 }
