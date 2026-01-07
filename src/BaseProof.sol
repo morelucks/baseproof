@@ -74,6 +74,9 @@ contract BaseProof {
     /// @dev Reverts if the proof hash has already been submitted
     /// @dev Emits ProofSubmitted event
     function submitProof(bytes32 proofHash, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
+        if (block.timestamp > deadline) revert DeadlineExpired();
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR(), keccak256(abi.encode(PROOF_TYPEHASH, proofHash, deadline))));
+        _verifySignature(digest, v, r, s);
         ProofData storage data = proofData[proofHash];
         if (data.submitted) revert ProofAlreadySubmitted(proofHash);
 
