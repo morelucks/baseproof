@@ -135,4 +135,11 @@ contract BaseProofTest is Test {
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", baseProof.DOMAIN_SEPARATOR(), keccak256(abi.encode(baseProof.PROOF_TYPEHASH(), hash, deadline))));
         (v, r, s) = vm.sign(verPrivateKey, digest);
     }
+
+    function test_RevertWhen_BadSigner() public {
+        bytes32 h = keccak256("bad"); uint256 dl = block.timestamp + 100;
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(0xBEEF, keccak256("dgst"));
+        vm.expectRevert(BaseProof.InvalidSignature.selector);
+        baseProof.submitProof(h, dl, v, r, s);
+    }
 }
