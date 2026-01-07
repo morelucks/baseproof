@@ -147,4 +147,9 @@ contract BaseProof {
         if (msg.sender != owner) revert Unauthorized();
         owner = newOwner;
     }
+
+    function setVerifier(address _verifier) external {
+        if (msg.sender != owner) revert Unauthorized();
+        verifier = _verifier;
+    }
 }
