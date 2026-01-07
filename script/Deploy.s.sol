@@ -10,7 +10,9 @@ contract Deploy is Script {
     function run() public returns (BaseProof) {
         vm.startBroadcast();
 
-        BaseProof baseProof = new BaseProof();
+        // Default verifier (can be updated later via setVerifier)
+        address verifier = vm.envOr("VERIFIER_ADDRESS", msg.sender);
+        BaseProof baseProof = new BaseProof(verifier);
 
         vm.stopBroadcast();
         
