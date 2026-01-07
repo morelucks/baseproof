@@ -24,7 +24,7 @@ contract BaseProofTest is Test {
         bytes32 proofHash = keccak256("test proof");
         
         vm.prank(user1);
-        baseProof.submitProof(proofHash);
+        uint256 dl = block.timestamp + 100; (uint8 v, bytes32 r, bytes32 s) = _sign(proofHash, dl); baseProof.submitProof(proofHash, dl, v, r, s);
 
         assertTrue(baseProof.isProofSubmitted(proofHash));
         assertEq(baseProof.userProofCount(user1), 1);
@@ -35,11 +35,11 @@ contract BaseProofTest is Test {
         bytes32 proofHash = keccak256("test proof");
         
         vm.prank(user1);
-        baseProof.submitProof(proofHash);
+        uint256 dl = block.timestamp + 100; (uint8 v, bytes32 r, bytes32 s) = _sign(proofHash, dl); baseProof.submitProof(proofHash, dl, v, r, s);
 
         vm.prank(user2);
         vm.expectRevert(abi.encodeWithSelector(BaseProof.ProofAlreadySubmitted.selector, proofHash));
-        baseProof.submitProof(proofHash);
+        uint256 dl = block.timestamp + 100; (uint8 v, bytes32 r, bytes32 s) = _sign(proofHash, dl); baseProof.submitProof(proofHash, dl, v, r, s);
     }
 
     function test_MultipleProofsFromSameUser() public {
@@ -63,12 +63,12 @@ contract BaseProofTest is Test {
         vm.expectEmit(true, true, false, true);
         emit BaseProof.ProofSubmitted(user1, proofHash, block.timestamp);
         
-        baseProof.submitProof(proofHash);
+        uint256 dl = block.timestamp + 100; (uint8 v, bytes32 r, bytes32 s) = _sign(proofHash, dl); baseProof.submitProof(proofHash, dl, v, r, s);
     }
 
     function testFuzz_SubmitProof(bytes32 proofHash) public {
         vm.prank(user1);
-        baseProof.submitProof(proofHash);
+        uint256 dl = block.timestamp + 100; (uint8 v, bytes32 r, bytes32 s) = _sign(proofHash, dl); baseProof.submitProof(proofHash, dl, v, r, s);
 
         assertTrue(baseProof.isProofSubmitted(proofHash));
         assertEq(baseProof.userProofCount(user1), 1);
@@ -76,11 +76,11 @@ contract BaseProofTest is Test {
 
     function testFuzz_RevertWhen_DuplicateProof(bytes32 proofHash) public {
         vm.prank(user1);
-        baseProof.submitProof(proofHash);
+        uint256 dl = block.timestamp + 100; (uint8 v, bytes32 r, bytes32 s) = _sign(proofHash, dl); baseProof.submitProof(proofHash, dl, v, r, s);
 
         vm.prank(user2);
         vm.expectRevert(abi.encodeWithSelector(BaseProof.ProofAlreadySubmitted.selector, proofHash));
-        baseProof.submitProof(proofHash);
+        uint256 dl = block.timestamp + 100; (uint8 v, bytes32 r, bytes32 s) = _sign(proofHash, dl); baseProof.submitProof(proofHash, dl, v, r, s);
     }
 }
 
@@ -121,7 +121,7 @@ contract BaseProofTest is Test {
         bytes32 proofHash = keccak256("existing");
         
         vm.prank(user1);
-        baseProof.submitProof(proofHash);
+        uint256 dl = block.timestamp + 100; (uint8 v, bytes32 r, bytes32 s) = _sign(proofHash, dl); baseProof.submitProof(proofHash, dl, v, r, s);
 
         bytes32[] memory proofHashes = new bytes32[](2);
         proofHashes[0] = proofHash;
