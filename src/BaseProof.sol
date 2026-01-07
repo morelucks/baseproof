@@ -165,4 +165,9 @@ contract BaseProof {
     function DOMAIN_SEPARATOR() public view returns (bytes32) {
         return keccak256(abi.encode(DOMAIN_TYPEHASH, keccak256(bytes("BaseProof")), keccak256(bytes("1")), block.chainid, address(this)));
     }
+
+    function _verifySignature(bytes32 digest, uint8 v, bytes32 r, bytes32 s) internal view {
+        address recovered = ecrecover(digest, v, r, s);
+        if (recovered == address(0) || recovered != verifier) revert InvalidSignature();
+    }
 }
