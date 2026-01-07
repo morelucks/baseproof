@@ -73,7 +73,7 @@ contract BaseProof {
     /// @param proofHash The hash of the proof to submit
     /// @dev Reverts if the proof hash has already been submitted
     /// @dev Emits ProofSubmitted event
-    function submitProof(bytes32 proofHash) external {
+    function submitProof(bytes32 proofHash, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
         ProofData storage data = proofData[proofHash];
         if (data.submitted) revert ProofAlreadySubmitted(proofHash);
 
