@@ -63,6 +63,11 @@ contract BaseProof {
     /// @notice Total number of proofs submitted
     /// @dev Using uint128 to save gas (max ~3.4e38 proofs)
     uint128 public totalProofs;
+    
+    constructor(address _verifier) {
+        owner = msg.sender;
+        verifier = _verifier;
+    }
 
     /// @notice Submit a proof hash
     /// @param proofHash The hash of the proof to submit
