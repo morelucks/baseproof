@@ -16,6 +16,9 @@ contract BaseProof {
     
     /// @notice Custom error for duplicate proof in batch
     error DuplicateInBatch(uint256 index);
+    error InvalidSignature();
+    error DeadlineExpired();
+    error Unauthorized();
 
     /// @notice Emitted when a proof is submitted
     /// @param user The address that submitted the proof
