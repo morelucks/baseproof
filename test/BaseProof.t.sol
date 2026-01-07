@@ -85,7 +85,7 @@ contract BaseProofTest is Test {
 }
 
 
-    // Batch Submission Tests
+    // Verified Batch Submission Tests
     function test_SubmitProofBatch() public {
         bytes32[] memory proofHashes = new bytes32[](3);
         proofHashes[0] = keccak256("batch 1");
