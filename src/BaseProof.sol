@@ -96,6 +96,9 @@ contract BaseProof {
     /// @dev More gas-efficient than multiple individual submissions
     /// @dev Reverts if any proof hash has already been submitted or if duplicates exist in batch
     function submitProofBatch(bytes32[] calldata proofHashes, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
+        if (block.timestamp > deadline) revert DeadlineExpired();
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR(), keccak256(abi.encode(BATCH_TYPEHASH, keccak256(abi.encodePacked(proofHashes)), deadline))));
+        _verifySignature(digest, v, r, s);
         uint256 length = proofHashes.length;
         if (length == 0) revert EmptyBatch();
 
