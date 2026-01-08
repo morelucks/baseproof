@@ -84,6 +84,18 @@ contract BaseProofTest is Test {
         baseProof.submitProof(h, dl, v, r, s);
     }
 
+    function test_Ownable2Step() public {
+        address newOwner = address(0xDEAF);
+        baseProof.transferOwnership(newOwner);
+        assertEq(baseProof.owner(), address(this));
+        assertEq(baseProof.pendingOwner(), newOwner);
+
+        vm.prank(newOwner);
+        baseProof.acceptOwnership();
+        assertEq(baseProof.owner(), newOwner);
+        assertEq(baseProof.pendingOwner(), address(0));
+    }
+
     function test_Ownership() public {
         address newOwner = address(0xBEEF);
         baseProof.transferOwnership(newOwner);
