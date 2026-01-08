@@ -7,14 +7,9 @@ pragma solidity ^0.8.13;
 /// @dev Optimized for gas efficiency on L2
 contract BaseProof {
     address public owner;
-    address public verifier;
-    mapping(address => bool) public isVerifier;
     address public pendingOwner;
+    mapping(address => bool) public isVerifier;
     bool public paused;
-    event Paused(address account);
-    event Unpaused(address account);
-    event VerifierAdded(address indexed verifier);
-    event VerifierRemoved(address indexed verifier);
 
     bytes32 public constant DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
     bytes32 public constant PROOF_TYPEHASH = keccak256("Proof(bytes32 proofHash,uint256 deadline)");
@@ -47,6 +42,11 @@ contract BaseProof {
         uint256 timestamp
     );
 
+    event Paused(address account);
+    event Unpaused(address account);
+    event VerifierAdded(address indexed verifier);
+    event VerifierRemoved(address indexed verifier);
+
     struct ProofData {
         bool submitted;
         uint128 timestamp;
@@ -60,12 +60,46 @@ contract BaseProof {
 
     constructor(address _verifier) {
         owner = msg.sender;
-        verifier = _verifier;
         isVerifier[_verifier] = true;
     }
 
-    function submitProof(bytes32 proofHash, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
+    modifier onlyOwner() {
+        if (msg.sender != owner) revert Unauthorized();
+        _;
+    }
+
+    modifier whenNotPaused() {
         if (paused) revert Unauthorized();
+        _;
+    }
+
+    function togglePause() external onlyOwner {
+        paused = !paused;
+        if (paused) emit Paused(msg.sender);
+        else emit Unpaused(msg.sender);
+    }
+
+    function transferOwnership(address _newOwner) external onlyOwner {
+        pendingOwner = _newOwner;
+    }
+
+    function acceptOwnership() external {
+        if (msg.sender != pendingOwner) revert Unauthorized();
+        owner = pendingOwner;
+        pendingOwner = address(0);
+    }
+
+    function addVerifier(address _verifier) external onlyOwner {
+        isVerifier[_verifier] = true;
+        emit VerifierAdded(_verifier);
+    }
+
+    function removeVerifier(address _verifier) external onlyOwner {
+        isVerifier[_verifier] = false;
+        emit VerifierRemoved(_verifier);
+    }
+
+    function submitProof(bytes32 proofHash, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external whenNotPaused {
         if (block.timestamp > deadline) revert DeadlineExpired();
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR(), keccak256(abi.encode(PROOF_TYPEHASH, proofHash, deadline))));
         _verifySignature(digest, v, r, s);
@@ -84,9 +118,7 @@ contract BaseProof {
         emit ProofSubmitted(msg.sender, proofHash, currentTimestamp);
     }
 
-    function submitProofBatch(bytes32[] calldata proofHashes, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
-        if (paused) revert Unauthorized();
-        if (paused) revert Unauthorized();
+    function submitProofBatch(bytes32[] calldata proofHashes, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external whenNotPaused {
         if (block.timestamp > deadline) revert DeadlineExpired();
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR(), keccak256(abi.encode(BATCH_TYPEHASH, keccak256(abi.encodePacked(proofHashes)), deadline))));
         _verifySignature(digest, v, r, s);
@@ -123,48 +155,16 @@ contract BaseProof {
     }
 
     function getProofData(bytes32 proofHash) external view returns (bool submitted, uint128 timestamp, uint128 userIndex) {
+        ProofData memory data = proofData[proofHash];
         return (data.submitted, data.timestamp, data.userIndex);
     }
 
     function getProofMetadata(bytes32 proofHash) external view returns (bytes32) {
         return proofData[proofHash].metadataHash;
-        ProofData memory data = proofData[proofHash];
-        return (data.submitted, data.timestamp, data.userIndex);
     }
 
     function getUserProofCount(address user) external view returns (uint256) {
         return uint256(userProofCount[user]);
-    }
-
-    function transferOwnership(address _newOwner) external {
-        if (msg.sender != owner) revert Unauthorized();
-        owner = pendingOwner;
-        pendingOwner = address(0);
-    }
-
-    function togglePause() external {
-        if (msg.sender != owner) revert Unauthorized();
-        paused = !paused;
-        if (paused) emit Paused(msg.sender);
-        else emit Unpaused(msg.sender);
-    }
-
-    function setVerifier(address _verifier) external {
-    }
-
-    function addVerifier(address _verifier) external {
-        if (msg.sender != owner) revert Unauthorized();
-        isVerifier[_verifier] = true;
-        emit VerifierAdded(_verifier);
-    }
-
-    function removeVerifier(address _verifier) external {
-        if (msg.sender != owner) revert Unauthorized();
-        isVerifier[_verifier] = false;
-        emit VerifierRemoved(_verifier);
-        if (msg.sender != owner) revert Unauthorized();
-        verifier = _verifier;
-        isVerifier[_verifier] = true;
     }
 
     function DOMAIN_SEPARATOR() public view returns (bytes32) {

@@ -96,16 +96,6 @@ contract BaseProofTest is Test {
         assertEq(baseProof.pendingOwner(), address(0));
     }
 
-    function test_Ownership() public {
-        address newOwner = address(0xBEEF);
-        baseProof.transferOwnership(newOwner);
-        assertEq(baseProof.owner(), newOwner);
-        
-        vm.prank(user1);
-        vm.expectRevert(BaseProof.Unauthorized.selector);
-        baseProof.setVerifier(user1);
-    }
-
     function test_RevertWhen_Paused() public {
         baseProof.togglePause();
         bytes32 h = keccak256("paused"); uint256 dl = block.timestamp + 100;
