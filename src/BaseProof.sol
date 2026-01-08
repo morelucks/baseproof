@@ -120,9 +120,10 @@ contract BaseProof {
         return uint256(userProofCount[user]);
     }
 
-    function transferOwnership(address newOwner) external {
+    function transferOwnership(address _newOwner) external {
         if (msg.sender != owner) revert Unauthorized();
-        owner = newOwner;
+        owner = pendingOwner;
+        pendingOwner = address(0);
     }
 
     function setVerifier(address _verifier) external {
