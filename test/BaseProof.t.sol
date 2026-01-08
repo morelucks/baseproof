@@ -105,4 +105,12 @@ contract BaseProofTest is Test {
         vm.expectRevert(BaseProof.Unauthorized.selector);
         baseProof.setVerifier(user1);
     }
+
+    function test_RevertWhen_Paused() public {
+        baseProof.togglePause();
+        bytes32 h = keccak256("paused"); uint256 dl = block.timestamp + 100;
+        (uint8 v, bytes32 r, bytes32 s) = _sign(h, dl);
+        vm.expectRevert(BaseProof.Unauthorized.selector);
+        baseProof.submitProof(h, dl, v, r, s);
+    }
 }
