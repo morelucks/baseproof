@@ -81,6 +81,7 @@ contract BaseProof {
 
     function submitProofBatch(bytes32[] calldata proofHashes, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
         if (paused) revert Unauthorized();
+        if (paused) revert Unauthorized();
         if (block.timestamp > deadline) revert DeadlineExpired();
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR(), keccak256(abi.encode(BATCH_TYPEHASH, keccak256(abi.encodePacked(proofHashes)), deadline))));
         _verifySignature(digest, v, r, s);
