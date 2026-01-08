@@ -113,4 +113,13 @@ contract BaseProofTest is Test {
         vm.expectRevert(BaseProof.Unauthorized.selector);
         baseProof.submitProof(h, dl, v, r, s);
     }
+
+    function test_MultiVerifier() public {
+        address v2 = address(0x999);
+        baseProof.addVerifier(v2);
+        assertTrue(baseProof.isVerifier(v2));
+
+        baseProof.removeVerifier(v2);
+        assertFalse(baseProof.isVerifier(v2));
+    }
 }
