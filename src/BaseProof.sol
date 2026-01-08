@@ -9,6 +9,9 @@ contract BaseProof {
     address public owner;
     address public verifier;
     address public pendingOwner;
+    bool public paused;
+    event Paused(address account);
+    event Unpaused(address account);
 
     bytes32 public constant DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
     bytes32 public constant PROOF_TYPEHASH = keccak256("Proof(bytes32 proofHash,uint256 deadline)");
