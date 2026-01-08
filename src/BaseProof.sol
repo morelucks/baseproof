@@ -123,6 +123,11 @@ contract BaseProof {
     }
 
     function getProofData(bytes32 proofHash) external view returns (bool submitted, uint128 timestamp, uint128 userIndex) {
+        return (data.submitted, data.timestamp, data.userIndex);
+    }
+
+    function getProofMetadata(bytes32 proofHash) external view returns (bytes32) {
+        return proofData[proofHash].metadataHash;
         ProofData memory data = proofData[proofHash];
         return (data.submitted, data.timestamp, data.userIndex);
     }
