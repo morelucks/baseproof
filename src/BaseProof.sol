@@ -13,6 +13,8 @@ contract BaseProof {
     bool public paused;
     event Paused(address account);
     event Unpaused(address account);
+    event VerifierAdded(address indexed verifier);
+    event VerifierRemoved(address indexed verifier);
 
     bytes32 public constant DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
     bytes32 public constant PROOF_TYPEHASH = keccak256("Proof(bytes32 proofHash,uint256 deadline)");
@@ -141,6 +143,18 @@ contract BaseProof {
     }
 
     function setVerifier(address _verifier) external {
+    }
+
+    function addVerifier(address _verifier) external {
+        if (msg.sender != owner) revert Unauthorized();
+        isVerifier[_verifier] = true;
+        emit VerifierAdded(_verifier);
+    }
+
+    function removeVerifier(address _verifier) external {
+        if (msg.sender != owner) revert Unauthorized();
+        isVerifier[_verifier] = false;
+        emit VerifierRemoved(_verifier);
         if (msg.sender != owner) revert Unauthorized();
         verifier = _verifier;
     }
