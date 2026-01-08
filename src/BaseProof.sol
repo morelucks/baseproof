@@ -8,6 +8,7 @@ pragma solidity ^0.8.13;
 contract BaseProof {
     address public owner;
     address public verifier;
+    address public pendingOwner;
 
     bytes32 public constant DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
     bytes32 public constant PROOF_TYPEHASH = keccak256("Proof(bytes32 proofHash,uint256 deadline)");
