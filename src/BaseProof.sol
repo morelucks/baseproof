@@ -60,6 +60,7 @@ contract BaseProof {
     constructor(address _verifier) {
         owner = msg.sender;
         verifier = _verifier;
+        isVerifier[_verifier] = true;
     }
 
     function submitProof(bytes32 proofHash, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external {
@@ -157,6 +158,7 @@ contract BaseProof {
         emit VerifierRemoved(_verifier);
         if (msg.sender != owner) revert Unauthorized();
         verifier = _verifier;
+        isVerifier[_verifier] = true;
     }
 
     function DOMAIN_SEPARATOR() public view returns (bytes32) {
@@ -165,6 +167,6 @@ contract BaseProof {
 
     function _verifySignature(bytes32 digest, uint8 v, bytes32 r, bytes32 s) internal view {
         address recoveredSigner = ecrecover(digest, v, r, s);
-        if (recoveredSigner == address(0) || recoveredSigner != verifier) revert InvalidSignature();
+        if (recoveredSigner == address(0) || !isVerifier[recoveredSigner]) revert InvalidSignature();
     }
 }
