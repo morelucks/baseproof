@@ -8,6 +8,7 @@ pragma solidity ^0.8.13;
 contract BaseProof {
     address public owner;
     address public verifier;
+    mapping(address => bool) public isVerifier;
     address public pendingOwner;
     bool public paused;
     event Paused(address account);
