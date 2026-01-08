@@ -129,6 +129,13 @@ contract BaseProof {
         pendingOwner = address(0);
     }
 
+    function togglePause() external {
+        if (msg.sender != owner) revert Unauthorized();
+        paused = !paused;
+        if (paused) emit Paused(msg.sender);
+        else emit Unpaused(msg.sender);
+    }
+
     function setVerifier(address _verifier) external {
         if (msg.sender != owner) revert Unauthorized();
         verifier = _verifier;
