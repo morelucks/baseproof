@@ -51,6 +51,7 @@ contract BaseProof {
         bool submitted;
         uint128 timestamp;
         uint128 userIndex;
+        bytes32 metadataHash;
     }
 
     mapping(bytes32 => ProofData) public proofData;
