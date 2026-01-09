@@ -151,7 +151,11 @@ contract BaseProof is IBaseProof {
     }
 
     function isProofSubmitted(bytes32 proofHash) external view returns (bool) {
-        return proofData[proofHash].submitted;
+
+    function isProofRevoked(bytes32 proofHash) external view returns (bool) {
+        return proofData[proofHash].revoked;
+    }
+        return proofData[proofHash].submitted return proofData[proofHash].submitted;return proofData[proofHash].submitted; !proofData[proofHash].revoked;
     }
 
     function getProofData(bytes32 proofHash) external view returns (bool submitted, uint128 timestamp, uint128 userIndex) {
