@@ -1,6 +1,6 @@
 # BaseProof
 
-## Trust‑Minimized Action Proofs on Base
+## Trust‑Minimized Action Proofs on Base V2 🛡️
 
 BaseProof is a decentralized application that allows users to generate and verify cryptographic proofs that a specific action occurred — without relying on blind trust in centralized services.
 
@@ -51,7 +51,7 @@ Go Backend
  └─ Exposes REST / WebSocket APIs
 
 BaseProof Smart Contract
- ├─ Stores proof hashes
+ ├─ Stores proof hashes and metadata
  ├─ Enforces submission rules
  ├─ Emits immutable events
 ```
