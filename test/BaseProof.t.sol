@@ -34,7 +34,7 @@ contract BaseProofTest is Test {
         baseProof.submitProof(proofHash);
 
         vm.prank(user2);
-        vm.expectRevert("BaseProof: proof already submitted");
+        vm.expectRevert(abi.encodeWithSelector(BaseProof.ProofAlreadySubmitted.selector, proofHash));
         baseProof.submitProof(proofHash);
     }
 
@@ -75,7 +75,7 @@ contract BaseProofTest is Test {
         baseProof.submitProof(proofHash);
 
         vm.prank(user2);
-        vm.expectRevert("BaseProof: proof already submitted");
+        vm.expectRevert(abi.encodeWithSelector(BaseProof.ProofAlreadySubmitted.selector, proofHash));
         baseProof.submitProof(proofHash);
     }
 }
