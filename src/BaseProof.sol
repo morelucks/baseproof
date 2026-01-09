@@ -77,10 +77,12 @@ contract BaseProof is IBaseProof {
 
     function transferOwnership(address _newOwner) external onlyOwner {
         pendingOwner = _newOwner;
+        emit OwnershipTransferStarted(owner, _newOwner);
     }
 
     function acceptOwnership() external {
         if (msg.sender != pendingOwner) revert Unauthorized();
+        emit OwnershipTransferred(owner, pendingOwner);
         owner = pendingOwner;
         pendingOwner = address(0);
     }
