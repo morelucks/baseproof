@@ -102,6 +102,7 @@ contract BaseProof is IBaseProof {
         uint256 currentTimestamp = block.timestamp;
         data.timestamp = uint128(currentTimestamp);
         data.userIndex = userProofCount[msg.sender];
+        data.metadataHash = metadataHash;
         
         userProofCount[msg.sender]++;
         totalProofs++;
