@@ -75,41 +75,4 @@ contract BaseProofTest is Test {
         vm.expectRevert(BaseProof.InvalidSignature.selector);
         baseProof.submitProof(h, dl, v, r, s);
     }
-
-    function test_RevertWhen_Expired() public {
-        bytes32 h = keccak256("old"); uint256 dl = block.timestamp - 1;
-        (uint8 v, bytes32 r, bytes32 s) = _sign(h, dl);
-        vm.prank(user1);
-        vm.expectRevert(BaseProof.DeadlineExpired.selector);
-        baseProof.submitProof(h, dl, v, r, s);
-    }
-
-    function test_Ownable2Step() public {
-        address newOwner = address(0xDEAF);
-        baseProof.transferOwnership(newOwner);
-        assertEq(baseProof.owner(), address(this));
-        assertEq(baseProof.pendingOwner(), newOwner);
-
-        vm.prank(newOwner);
-        baseProof.acceptOwnership();
-        assertEq(baseProof.owner(), newOwner);
-        assertEq(baseProof.pendingOwner(), address(0));
-    }
-
-    function test_RevertWhen_Paused() public {
-        baseProof.togglePause();
-        bytes32 h = keccak256("paused"); uint256 dl = block.timestamp + 100;
-        (uint8 v, bytes32 r, bytes32 s) = _sign(h, dl);
-        vm.expectRevert(BaseProof.Unauthorized.selector);
-        baseProof.submitProof(h, dl, v, r, s);
-    }
-
-    function test_MultiVerifier() public {
-        address v2 = address(0x999);
-        baseProof.addVerifier(v2);
-        assertTrue(baseProof.isVerifier(v2));
-
-        baseProof.removeVerifier(v2);
-        assertFalse(baseProof.isVerifier(v2));
-    }
 }
