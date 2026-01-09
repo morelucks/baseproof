@@ -107,5 +107,38 @@ contract BaseProofTest is Test {
 
         baseProof.submitProofBatch(proofHashes);
     }
+
+    function test_RevertWhen_EmptyBatch() public {
+        bytes32[] memory proofHashes = new bytes32[](0);
+
+        vm.prank(user1);
+        vm.expectRevert(BaseProof.EmptyBatch.selector);
+        baseProof.submitProofBatch(proofHashes);
+    }
+
+    function test_RevertWhen_DuplicateInBatch() public {
+        bytes32[] memory proofHashes = new bytes32[](3);
+        proofHashes[0] = keccak256("proof 1");
+        proofHashes[1] = keccak256("proof 2");
+        proofHashes[2] = keccak256("proof 1"); // duplicate
+
+        vm.prank(user1);
+        vm.expectRevert(abi.encodeWithSelector(BaseProof.DuplicateInBatch.selector, 2));
+        baseProof.submitProofBatch(proofHashes);
+    }
+
+    function test_RevertWhen_BatchContainsExistingProof() public {
+        bytes32 existingHash = keccak256("existing proof");
+        bytes32[] memory proofHashes = new bytes32[](2);
+        proofHashes[0] = keccak256("new proof");
+        proofHashes[1] = existingHash;
+
+        vm.prank(user1);
+        baseProof.submitProof(existingHash);
+
+        vm.prank(user2);
+        vm.expectRevert(abi.encodeWithSelector(BaseProof.ProofAlreadySubmitted.selector, existingHash));
+        baseProof.submitProofBatch(proofHashes);
+    }
 }
 
