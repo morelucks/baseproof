@@ -90,7 +90,7 @@ contract BaseProof is IBaseProof {
         emit VerifierRemoved(_verifier);
     }
 
-    function submitProof(bytes32 proofHash, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external whenNotPaused {
+    function submitProof(bytes32 proofHash, bytes32 metadataHash, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external whenNotPaused {
         if (block.timestamp > deadline) revert DeadlineExpired();
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR(), keccak256(abi.encode(PROOF_TYPEHASH, proofHash, deadline))));
         _verifySignature(digest, v, r, s);
