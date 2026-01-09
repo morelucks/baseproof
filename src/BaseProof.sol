@@ -87,6 +87,14 @@ contract BaseProof is IBaseProof {
     }
 
     function removeVerifier(address _verifier) external onlyOwner {
+
+    function revokeProof(bytes32 proofHash) external {
+        if (msg.sender != owner && !isVerifier[msg.sender]) revert Unauthorized();
+        ProofData storage data = proofData[proofHash];
+        if (!data.submitted) revert Unauthorized();
+        data.revoked = true;
+        emit ProofRevoked(proofHash, msg.sender);
+    }
         isVerifier[_verifier] = false;
         emit VerifierRemoved(_verifier);
     }
