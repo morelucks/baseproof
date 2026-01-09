@@ -15,6 +15,9 @@ contract BaseProof is IBaseProof {
 
     bytes32 public constant DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
     bytes32 public constant PROOF_TYPEHASH = keccak256("Proof(bytes32 proofHash,uint256 deadline)");
+
+    event OwnershipTransferStarted(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     bytes32 public constant BATCH_TYPEHASH = keccak256("BatchProof(bytes32[] proofHashes,uint256 deadline)");
 
     /// @notice Custom error for duplicate proof submission
@@ -52,6 +55,7 @@ contract BaseProof is IBaseProof {
 
     constructor(address _verifier) {
         owner = msg.sender;
+        emit OwnershipTransferred(address(0), msg.sender);
         isVerifier[_verifier] = true;
     }
 
@@ -102,6 +106,9 @@ contract BaseProof is IBaseProof {
     function submitProof(bytes32 proofHash, bytes32 metadataHash, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external whenNotPaused {
         if (block.timestamp > deadline) revert DeadlineExpired();
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR(), keccak256(abi.encode(PROOF_TYPEHASH, proofHash, deadline))));
+
+    event OwnershipTransferStarted(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
         _verifySignature(digest, v, r, s);
 
         ProofData storage data = proofData[proofHash];
