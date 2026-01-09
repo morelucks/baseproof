@@ -17,10 +17,10 @@ contract BaseProof {
 
     /// @notice Custom error for duplicate proof submission
     error ProofAlreadySubmitted(bytes32 proofHash);
-    
+
     /// @notice Custom error for empty batch submission
     error EmptyBatch();
-    
+
     /// @notice Custom error for duplicate proof in batch
     error DuplicateInBatch(uint256 index);
 
@@ -111,7 +111,7 @@ contract BaseProof {
         uint256 currentTimestamp = block.timestamp;
         data.timestamp = uint128(currentTimestamp);
         data.userIndex = userProofCount[msg.sender];
-        
+
         userProofCount[msg.sender]++;
         totalProofs++;
 
@@ -132,7 +132,7 @@ contract BaseProof {
         for (uint256 i = 0; i < length; ++i) {
             bytes32 proofHash = proofHashes[i];
             ProofData storage data = proofData[proofHash];
-            
+
             if (data.submitted) revert ProofAlreadySubmitted(proofHash);
             
             for (uint256 j = i + 1; j < length; ++j) {
