@@ -140,5 +140,81 @@ contract BaseProofTest is Test {
         vm.expectRevert(abi.encodeWithSelector(BaseProof.ProofAlreadySubmitted.selector, existingHash));
         baseProof.submitProofBatch(proofHashes);
     }
+
+    function test_MixedIndividualAndBatch() public {
+        bytes32 individualHash = keccak256("individual");
+        bytes32[] memory batchHashes = new bytes32[](2);
+        batchHashes[0] = keccak256("batch 1");
+        batchHashes[1] = keccak256("batch 2");
+
+        vm.prank(user1);
+        baseProof.submitProof(individualHash);
+
+        vm.prank(user1);
+        baseProof.submitProofBatch(batchHashes);
+
+        assertEq(baseProof.userProofCount(user1), 3);
+        assertEq(baseProof.totalProofs(), 3);
+    }
+
+    // getProofData tests
+    function test_GetProofData() public {
+        bytes32 proofHash = keccak256("test proof");
+
+        (bool submitted, uint128 timestamp, uint128 userIndex) = baseProof.getProofData(proofHash);
+        assertFalse(submitted);
+        assertEq(timestamp, 0);
+        assertEq(userIndex, 0);
+
+        vm.prank(user1);
+        baseProof.submitProof(proofHash);
+
+        (submitted, timestamp, userIndex) = baseProof.getProofData(proofHash);
+        assertTrue(submitted);
+        assertEq(timestamp, block.timestamp);
+        assertEq(userIndex, 0);
+    }
+
+    function test_GetProofData_MultipleProofs() public {
+        bytes32 proofHash1 = keccak256("proof 1");
+        bytes32 proofHash2 = keccak256("proof 2");
+
+        vm.prank(user1);
+        baseProof.submitProof(proofHash1);
+
+        vm.prank(user1);
+        baseProof.submitProof(proofHash2);
+
+        (, , uint128 userIndex1) = baseProof.getProofData(proofHash1);
+        (, , uint128 userIndex2) = baseProof.getProofData(proofHash2);
+
+        assertEq(userIndex1, 0);
+        assertEq(userIndex2, 1);
+    }
+
+    function test_GetUserProofCount() public {
+        assertEq(baseProof.getUserProofCount(user1), 0);
+
+        bytes32 proofHash = keccak256("test proof");
+        vm.prank(user1);
+        baseProof.submitProof(proofHash);
+
+        assertEq(baseProof.getUserProofCount(user1), 1);
+    }
+
+    function test_MultipleUsers() public {
+        bytes32 proofHash1 = keccak256("user1 proof");
+        bytes32 proofHash2 = keccak256("user2 proof");
+
+        vm.prank(user1);
+        baseProof.submitProof(proofHash1);
+
+        vm.prank(user2);
+        baseProof.submitProof(proofHash2);
+
+        assertEq(baseProof.userProofCount(user1), 1);
+        assertEq(baseProof.userProofCount(user2), 1);
+        assertEq(baseProof.totalProofs(), 2);
+    }
 }
 
