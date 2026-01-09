@@ -10,6 +10,7 @@ interface IBaseProof {
     error Unauthorized();
 
     event ProofSubmitted(address indexed user, bytes32 indexed proofHash, uint256 timestamp);
+    event ProofRevoked(bytes32 indexed proofHash, address indexed revoker);
     event BatchProofSubmitted(address indexed user, uint256 count, uint256 timestamp);
     event Paused(address account);
     event Unpaused(address account);
@@ -24,6 +25,8 @@ interface IBaseProof {
         bytes32 r, 
         bytes32 s
     ) external;
+
+    function revokeProof(bytes32 proofHash) external;
 
     function submitProofBatch(
         bytes32[] calldata proofHashes,
