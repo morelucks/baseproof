@@ -40,6 +40,7 @@ contract BaseProof is IBaseProof {
 
     struct ProofData {
         bool submitted;
+        bool revoked;
         uint128 timestamp;
         uint128 userIndex;
         bytes32 metadataHash;
