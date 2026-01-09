@@ -216,5 +216,36 @@ contract BaseProofTest is Test {
         assertEq(baseProof.userProofCount(user2), 1);
         assertEq(baseProof.totalProofs(), 2);
     }
+
+    function testFuzz_BatchSubmission(bytes32[] calldata proofHashes) public {
+        if (proofHashes.length == 0) {
+            vm.expectRevert(BaseProof.EmptyBatch.selector);
+            baseProof.submitProofBatch(proofHashes);
+            return;
+        }
+
+        // Remove duplicates for valid test
+        bool hasDuplicates = false;
+        for (uint256 i = 0; i < proofHashes.length; ++i) {
+            for (uint256 j = i + 1; j < proofHashes.length; ++j) {
+                if (proofHashes[i] == proofHashes[j]) {
+                    hasDuplicates = true;
+                    break;
+                }
+            }
+            if (hasDuplicates) break;
+        }
+
+        if (hasDuplicates) {
+            // Skip test if duplicates exist
+            return;
+        }
+
+        vm.prank(user1);
+        baseProof.submitProofBatch(proofHashes);
+
+        assertEq(baseProof.userProofCount(user1), uint128(proofHashes.length));
+        assertEq(baseProof.totalProofs(), uint128(proofHashes.length));
+    }
 }
 
