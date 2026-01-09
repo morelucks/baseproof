@@ -21,6 +21,17 @@ contract BaseProof is IBaseProof {
     bytes32 public constant BATCH_TYPEHASH = keccak256("BatchProof(bytes32[] proofHashes,uint256 deadline)");
 
     /// @notice Custom error for duplicate proof submission
+    error ProofAlreadySubmitted(bytes32 proofHash);
+
+    /// @notice Custom error for empty batch submission
+    error EmptyBatch();
+
+    /// @notice Custom error for duplicate proof in batch
+    error DuplicateInBatch(uint256 index);
+
+    error InvalidSignature();
+    error DeadlineExpired();
+    error Unauthorized();
 
     /// @notice Emitted when a proof is submitted
     event ProofSubmitted(
@@ -156,8 +167,7 @@ contract BaseProof is IBaseProof {
         uint256 currentTimestamp = block.timestamp;
         data.timestamp = uint128(currentTimestamp);
         data.userIndex = userProofCount[msg.sender];
-        data.metadataHash = metadataHash;
-        
+
         userProofCount[msg.sender]++;
         totalProofs++;
 
@@ -179,7 +189,7 @@ contract BaseProof is IBaseProof {
         for (uint256 i = 0; i < length; ++i) {
             bytes32 proofHash = proofHashes[i];
             ProofData storage data = proofData[proofHash];
-            
+
             if (data.submitted) revert ProofAlreadySubmitted(proofHash);
             
 
