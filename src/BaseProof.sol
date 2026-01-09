@@ -81,9 +81,45 @@ contract BaseProof is IBaseProof {
     }
 
     function acceptOwnership() external {
+
+    function renounceOwnership() external onlyOwner {
+        emit OwnershipTransferred(owner, address(0));
+        owner = address(0);
+        pendingOwner = address(0);
+    }
         if (msg.sender != pendingOwner) revert Unauthorized();
+
+    function renounceOwnership() external onlyOwner {
+        emit OwnershipTransferred(owner, address(0));
+        owner = address(0);
+        pendingOwner = address(0);
+    }
         emit OwnershipTransferred(owner, pendingOwner);
+
+    function renounceOwnership() external onlyOwner {
+        emit OwnershipTransferred(owner, address(0));
+        owner = address(0);
+        pendingOwner = address(0);
+    }
         owner = pendingOwner;
+
+    function renounceOwnership() external onlyOwner {
+        emit OwnershipTransferred(owner, address(0));
+        owner = address(0);
+        pendingOwner = address(0);
+    }
+        pendingOwner = address(0);
+
+    function renounceOwnership() external onlyOwner {
+        emit OwnershipTransferred(owner, address(0));
+        owner = address(0);
+        pendingOwner = address(0);
+    }
+    }
+
+    function renounceOwnership() external onlyOwner {
+        emit OwnershipTransferred(owner, address(0));
+        owner = address(0);
         pendingOwner = address(0);
     }
 
