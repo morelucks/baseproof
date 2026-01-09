@@ -117,6 +117,7 @@ contract BaseProof is IBaseProof {
 
         uint256 length = proofHashes.length;
         if (length == 0) revert EmptyBatch();
+        if (metadataHashes.length != length) revert InvalidSignature();
 
         uint256 timestamp = block.timestamp;
         uint128 userCount = userProofCount[msg.sender];
@@ -127,13 +128,11 @@ contract BaseProof is IBaseProof {
             
             if (data.submitted) revert ProofAlreadySubmitted(proofHash);
             
-            for (uint256 j = i + 1; j < length; ++j) {
-                if (proofHash == proofHashes[j]) revert DuplicateInBatch(j);
-            }
 
             data.submitted = true;
             data.timestamp = uint128(timestamp);
             data.userIndex = userCount + uint128(i);
+            data.metadataHash = metadataHashes[i];
         }
 
         userProofCount[msg.sender] += uint128(length);
