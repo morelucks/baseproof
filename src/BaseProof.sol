@@ -5,7 +5,9 @@ pragma solidity ^0.8.13;
 /// @notice Trust-minimized action proofs on Base
 /// @dev Stores cryptographic proof hashes and prevents duplicates
 /// @dev Optimized for gas efficiency on L2
-contract BaseProof {
+import {IBaseProof} from "./IBaseProof.sol";
+
+contract BaseProof is IBaseProof {
     address public owner;
     address public pendingOwner;
     mapping(address => bool) public isVerifier;
@@ -16,17 +18,6 @@ contract BaseProof {
     bytes32 public constant BATCH_TYPEHASH = keccak256("BatchProof(bytes32[] proofHashes,uint256 deadline)");
 
     /// @notice Custom error for duplicate proof submission
-    error ProofAlreadySubmitted(bytes32 proofHash);
-    
-    /// @notice Custom error for empty batch submission
-    error EmptyBatch();
-    
-    /// @notice Custom error for duplicate proof in batch
-    error DuplicateInBatch(uint256 index);
-
-    error InvalidSignature();
-    error DeadlineExpired();
-    error Unauthorized();
 
     /// @notice Emitted when a proof is submitted
     event ProofSubmitted(
