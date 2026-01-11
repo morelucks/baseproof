@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
+import {IBaseProof} from "./IBaseProof.sol";
+
 /// @title BaseProof
 /// @notice Trust-minimized action proofs on Base
 /// @dev Stores cryptographic proof hashes and prevents duplicates
-/// @dev Optimized for gas efficiency on L2
-import {IBaseProof} from "./IBaseProof.sol";
-
 contract BaseProof is IBaseProof {
     address public owner;
     address public pendingOwner;
@@ -15,38 +14,20 @@ contract BaseProof is IBaseProof {
 
     bytes32 public constant DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
     bytes32 public constant PROOF_TYPEHASH = keccak256("Proof(bytes32 proofHash,uint256 deadline)");
-
-    event OwnershipTransferStarted(address indexed previousOwner, address indexed newOwner);
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     bytes32 public constant BATCH_TYPEHASH = keccak256("BatchProof(bytes32[] proofHashes,uint256 deadline)");
 
-    /// @notice Custom error for duplicate proof submission
     error ProofAlreadySubmitted(bytes32 proofHash);
-
-    /// @notice Custom error for empty batch submission
     error EmptyBatch();
-
-    /// @notice Custom error for duplicate proof in batch
     error DuplicateInBatch(uint256 index);
-
     error InvalidSignature();
     error DeadlineExpired();
     error Unauthorized();
 
-    /// @notice Emitted when a proof is submitted
-    event ProofSubmitted(
-        address indexed user,
-        bytes32 indexed proofHash,
-        uint256 timestamp
-    );
-
-    /// @notice Emitted when multiple proofs are submitted in a batch
-    event BatchProofSubmitted(
-        address indexed user,
-        uint256 count,
-        uint256 timestamp
-    );
-
+    event OwnershipTransferStarted(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event ProofSubmitted(address indexed user, bytes32 indexed proofHash, uint256 timestamp);
+    event ProofRevoked(bytes32 indexed proofHash, address indexed revoker);
+    event BatchProofSubmitted(address indexed user, uint256 count, uint256 timestamp);
     event Paused(address account);
     event Unpaused(address account);
     event VerifierAdded(address indexed verifier);
@@ -67,7 +48,10 @@ contract BaseProof is IBaseProof {
     constructor(address _verifier) {
         owner = msg.sender;
         emit OwnershipTransferred(address(0), msg.sender);
-        isVerifier[_verifier] = true;
+        if (_verifier != address(0)) {
+            isVerifier[_verifier] = true;
+            emit VerifierAdded(_verifier);
+        }
     }
 
     modifier onlyOwner() {
@@ -92,40 +76,10 @@ contract BaseProof is IBaseProof {
     }
 
     function acceptOwnership() external {
-
-    function renounceOwnership() external onlyOwner {
-        emit OwnershipTransferred(owner, address(0));
-        owner = address(0);
-        pendingOwner = address(0);
-    }
         if (msg.sender != pendingOwner) revert Unauthorized();
-
-    function renounceOwnership() external onlyOwner {
-        emit OwnershipTransferred(owner, address(0));
-        owner = address(0);
-        pendingOwner = address(0);
-    }
         emit OwnershipTransferred(owner, pendingOwner);
-
-    function renounceOwnership() external onlyOwner {
-        emit OwnershipTransferred(owner, address(0));
-        owner = address(0);
-        pendingOwner = address(0);
-    }
         owner = pendingOwner;
-
-    function renounceOwnership() external onlyOwner {
-        emit OwnershipTransferred(owner, address(0));
-        owner = address(0);
         pendingOwner = address(0);
-    }
-        pendingOwner = address(0);
-
-    function renounceOwnership() external onlyOwner {
-        emit OwnershipTransferred(owner, address(0));
-        owner = address(0);
-        pendingOwner = address(0);
-    }
     }
 
     function renounceOwnership() external onlyOwner {
@@ -140,6 +94,9 @@ contract BaseProof is IBaseProof {
     }
 
     function removeVerifier(address _verifier) external onlyOwner {
+        isVerifier[_verifier] = false;
+        emit VerifierRemoved(_verifier);
+    }
 
     function revokeProof(bytes32 proofHash) external {
         if (msg.sender != owner && !isVerifier[msg.sender]) revert Unauthorized();
@@ -148,22 +105,17 @@ contract BaseProof is IBaseProof {
         data.revoked = true;
         emit ProofRevoked(proofHash, msg.sender);
     }
-        isVerifier[_verifier] = false;
-        emit VerifierRemoved(_verifier);
-    }
 
     function submitProof(bytes32 proofHash, bytes32 metadataHash, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external whenNotPaused {
         if (block.timestamp > deadline) revert DeadlineExpired();
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR(), keccak256(abi.encode(PROOF_TYPEHASH, proofHash, deadline))));
-
-    event OwnershipTransferStarted(address indexed previousOwner, address indexed newOwner);
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
         _verifySignature(digest, v, r, s);
 
         ProofData storage data = proofData[proofHash];
         if (data.submitted) revert ProofAlreadySubmitted(proofHash);
 
         data.submitted = true;
+        data.metadataHash = metadataHash;
         uint256 currentTimestamp = block.timestamp;
         data.timestamp = uint128(currentTimestamp);
         data.userIndex = userProofCount[msg.sender];
@@ -191,7 +143,6 @@ contract BaseProof is IBaseProof {
             ProofData storage data = proofData[proofHash];
 
             if (data.submitted) revert ProofAlreadySubmitted(proofHash);
-            
 
             data.submitted = true;
             data.timestamp = uint128(timestamp);
@@ -206,16 +157,16 @@ contract BaseProof is IBaseProof {
     }
 
     function isProofSubmitted(bytes32 proofHash) external view returns (bool) {
+        return proofData[proofHash].submitted && !proofData[proofHash].revoked;
+    }
 
     function isProofRevoked(bytes32 proofHash) external view returns (bool) {
         return proofData[proofHash].revoked;
     }
-        return proofData[proofHash].submitted return proofData[proofHash].submitted;return proofData[proofHash].submitted; !proofData[proofHash].revoked;
-    }
 
-    function getProofData(bytes32 proofHash) external view returns (bool submitted, uint128 timestamp, uint128 userIndex) {
+    function getProofData(bytes32 proofHash) external view returns (bool submitted, bool revoked, uint128 timestamp, uint128 userIndex, bytes32 metadataHash) {
         ProofData memory data = proofData[proofHash];
-        return (data.submitted, data.timestamp, data.userIndex);
+        return (data.submitted, data.revoked, data.timestamp, data.userIndex, data.metadataHash);
     }
 
     function getProofMetadata(bytes32 proofHash) external view returns (bytes32) {
