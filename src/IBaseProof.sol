@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
+/// @title IBaseProof
+/// @notice Interface for the BaseProof contract
 interface IBaseProof {
     error ProofAlreadySubmitted(bytes32 proofHash);
     error EmptyBatch();
@@ -38,4 +40,8 @@ interface IBaseProof {
     ) external;
 
     function isProofSubmitted(bytes32 proofHash) external view returns (bool);
+    function isProofRevoked(bytes32 proofHash) external view returns (bool);
+    function getProofData(bytes32 proofHash) external view returns (bool submitted, bool revoked, uint128 timestamp, uint128 userIndex, bytes32 metadataHash);
+    function getProofMetadata(bytes32 proofHash) external view returns (bytes32);
+    function getUserProofCount(address user) external view returns (uint256);
 }
