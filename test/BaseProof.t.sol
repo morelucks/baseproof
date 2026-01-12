@@ -79,6 +79,43 @@ contract BaseProofTest is Test {
         baseProof.submitProof(proofHash, metadataHash, dl, v, r, s);
     }
 
+    function test_SubmitProofBatch() public {
+        bytes32[] memory proofHashes = new bytes32[](3);
+        bytes32[] memory metaHashes = new bytes32[](3);
+        proofHashes[0] = keccak256("batch 1");
+        proofHashes[1] = keccak256("batch 2");
+        proofHashes[2] = keccak256("batch 3");
+        metaHashes[0] = keccak256("param 1");
+        metaHashes[1] = keccak256("param 2");
+        metaHashes[2] = keccak256("param 3");
+
+        uint256 dl = block.timestamp + 100;
+
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                baseProof.DOMAIN_SEPARATOR(),
+                keccak256(
+                    abi.encode(
+                        baseProof.BATCH_TYPEHASH(),
+                        keccak256(abi.encodePacked(proofHashes)),
+                        dl
+                    )
+                )
+            )
+        );
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(verPrivateKey, digest);
+
+        vm.prank(user1);
+        baseProof.submitProofBatch(proofHashes, metaHashes, dl, v, r, s);
+
+        assertTrue(baseProof.isProofSubmitted(proofHashes[0]));
+        assertTrue(baseProof.isProofSubmitted(proofHashes[1]));
+        assertTrue(baseProof.isProofSubmitted(proofHashes[2]));
+        assertEq(baseProof.userProofCount(user1), 3);
+        assertEq(baseProof.totalProofs(), 3);
+    }
+
     /*
     function test_RevertWhen_DuplicateProof() public {
         bytes32 proofHash = keccak256("test proof");
