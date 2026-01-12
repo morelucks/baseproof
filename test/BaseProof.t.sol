@@ -293,6 +293,45 @@ contract BaseProofTest is Test {
         baseProof.submitProofBatch(proofHashes, metaHashes, dl2, v2, r2, s2);
     }
 
+    function test_MixedIndividualAndBatch() public {
+        bytes32 individualHash = keccak256("individual");
+        bytes32 individualMeta = keccak256("meta 0");
+        bytes32[] memory batchHashes = new bytes32[](2);
+        batchHashes[0] = keccak256("batch 1");
+        batchHashes[1] = keccak256("batch 2");
+        bytes32[] memory metaHashes = new bytes32[](2);
+        metaHashes[0] = keccak256("meta 1");
+        metaHashes[1] = keccak256("meta 2");
+
+        uint256 dl1 = block.timestamp + 100;
+        (uint8 v1, bytes32 r1, bytes32 s1) = _sign(individualHash, dl1);
+
+        vm.prank(user1);
+        baseProof.submitProof(individualHash, individualMeta, dl1, v1, r1, s1);
+
+        uint256 dl2 = block.timestamp + 200;
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                baseProof.DOMAIN_SEPARATOR(),
+                keccak256(
+                    abi.encode(
+                        baseProof.BATCH_TYPEHASH(),
+                        keccak256(abi.encodePacked(batchHashes)),
+                        dl2
+                    )
+                )
+            )
+        );
+        (uint8 v2, bytes32 r2, bytes32 s2) = vm.sign(verPrivateKey, digest);
+
+        vm.prank(user1);
+        baseProof.submitProofBatch(batchHashes, metaHashes, dl2, v2, r2, s2);
+
+        assertEq(baseProof.userProofCount(user1), 3);
+        assertEq(baseProof.totalProofs(), 3);
+    }
+
     /*
     function test_RevertWhen_DuplicateProof() public {
         bytes32 proofHash = keccak256("test proof");
