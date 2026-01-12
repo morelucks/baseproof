@@ -361,6 +361,29 @@ contract BaseProofTest is Test {
         assertEq(storedMeta, metadataHash);
     }
 
+    function test_GetProofData_MultipleProofs() public {
+        bytes32 proofHash1 = keccak256("proof 1");
+        bytes32 proofHash2 = keccak256("proof 2");
+        bytes32 meta1 = keccak256("meta 1");
+        bytes32 meta2 = keccak256("meta 2");
+        uint256 dl = block.timestamp + 100;
+
+        (uint8 v1, bytes32 r1, bytes32 s1) = _sign(proofHash1, dl);
+        (uint8 v2, bytes32 r2, bytes32 s2) = _sign(proofHash2, dl);
+
+        vm.prank(user1);
+        baseProof.submitProof(proofHash1, meta1, dl, v1, r1, s1);
+
+        vm.prank(user1);
+        baseProof.submitProof(proofHash2, meta2, dl, v2, r2, s2);
+
+        (, , , uint128 userIndex1, ) = baseProof.getProofData(proofHash1);
+        (, , , uint128 userIndex2, ) = baseProof.getProofData(proofHash2);
+
+        assertEq(userIndex1, 0);
+        assertEq(userIndex2, 1);
+    }
+
     /*
     function test_RevertWhen_DuplicateProof() public {
         bytes32 proofHash = keccak256("test proof");
