@@ -60,6 +60,25 @@ contract BaseProofTest is Test {
         assertEq(timestamp, block.timestamp);
     }
 
+    function test_RevertWhen_DuplicateProof() public {
+        bytes32 proofHash = keccak256("test proof");
+        bytes32 metadataHash = keccak256("json metadata");
+        uint256 dl = block.timestamp + 100;
+        (uint8 v, bytes32 r, bytes32 s) = _sign(proofHash, dl);
+
+        vm.prank(user1);
+        baseProof.submitProof(proofHash, metadataHash, dl, v, r, s);
+
+        vm.prank(user2);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IBaseProof.ProofAlreadySubmitted.selector,
+                proofHash
+            )
+        );
+        baseProof.submitProof(proofHash, metadataHash, dl, v, r, s);
+    }
+
     /*
     function test_RevertWhen_DuplicateProof() public {
         bytes32 proofHash = keccak256("test proof");
