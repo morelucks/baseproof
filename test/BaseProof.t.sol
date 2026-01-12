@@ -116,6 +116,17 @@ contract BaseProofTest is Test {
         assertEq(baseProof.totalProofs(), 3);
     }
 
+    function test_RevertWhen_BadSigner() public {
+        bytes32 h = keccak256("bad");
+        bytes32 m = keccak256("meta");
+        uint256 dl = block.timestamp + 100;
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(0xBEEF, keccak256("dgst"));
+        vm.prank(user1);
+        vm.expectRevert(IBaseProof.InvalidSignature.selector);
+        baseProof.submitProof(h, m, dl, v, r, s);
+    }
+
     /*
     function test_RevertWhen_DuplicateProof() public {
         bytes32 proofHash = keccak256("test proof");
