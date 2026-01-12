@@ -332,6 +332,35 @@ contract BaseProofTest is Test {
         assertEq(baseProof.totalProofs(), 3);
     }
 
+    function test_GetProofData() public {
+        bytes32 proofHash = keccak256("test proof");
+        bytes32 metadataHash = keccak256("json metadata");
+        uint256 dl = block.timestamp + 100;
+        (uint8 v, bytes32 r, bytes32 s) = _sign(proofHash, dl);
+
+        (
+            bool submitted,
+            ,
+            uint128 timestamp,
+            uint128 userIndex,
+            bytes32 storedMeta
+        ) = baseProof.getProofData(proofHash);
+        assertFalse(submitted);
+        assertEq(timestamp, 0);
+        assertEq(userIndex, 0);
+        assertEq(storedMeta, bytes32(0));
+
+        vm.prank(user1);
+        baseProof.submitProof(proofHash, metadataHash, dl, v, r, s);
+
+        (submitted, , timestamp, userIndex, storedMeta) = baseProof
+            .getProofData(proofHash);
+        assertTrue(submitted);
+        assertEq(timestamp, block.timestamp);
+        assertEq(userIndex, 0);
+        assertEq(storedMeta, metadataHash);
+    }
+
     /*
     function test_RevertWhen_DuplicateProof() public {
         bytes32 proofHash = keccak256("test proof");
