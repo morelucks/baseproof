@@ -142,6 +142,19 @@ contract BaseProofTest is Test {
         assertTrue(baseProof.isProofRevoked(proofHash));
     }
 
+    function test_RevertWhen_RevokeUnauthorized() public {
+        bytes32 proofHash = keccak256("to revoke");
+        bytes32 metadataHash = keccak256("json metadata");
+        uint256 dl = block.timestamp + 100;
+        (uint8 v, bytes32 r, bytes32 s) = _sign(proofHash, dl);
+
+        baseProof.submitProof(proofHash, metadataHash, dl, v, r, s);
+
+        vm.prank(user2);
+        vm.expectRevert(IBaseProof.Unauthorized.selector);
+        baseProof.revokeProof(proofHash);
+    }
+
     /*
     function test_RevertWhen_DuplicateProof() public {
         bytes32 proofHash = keccak256("test proof");
