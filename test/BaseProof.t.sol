@@ -249,6 +249,50 @@ contract BaseProofTest is Test {
         baseProof.submitProofBatch(proofHashes, metaHashes, dl, v, r, s);
     }
 
+    function test_RevertWhen_BatchContainsExistingProof() public {
+        bytes32 existingHash = keccak256("existing proof");
+        bytes32[] memory proofHashes = new bytes32[](2);
+        proofHashes[0] = keccak256("new proof");
+        proofHashes[1] = existingHash;
+        bytes32[] memory metaHashes = new bytes32[](2);
+        metaHashes[0] = keccak256("meta 1");
+        metaHashes[1] = keccak256("meta 2");
+
+        // Submit existing proof first
+        bytes32 existMeta = keccak256("existing meta");
+        uint256 dl1 = block.timestamp + 100;
+        (uint8 v1, bytes32 r1, bytes32 s1) = _sign(existingHash, dl1);
+
+        vm.prank(user1);
+        baseProof.submitProof(existingHash, existMeta, dl1, v1, r1, s1);
+
+        // Prepare batch submission containing existingHash
+        uint256 dl2 = block.timestamp + 200;
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                baseProof.DOMAIN_SEPARATOR(),
+                keccak256(
+                    abi.encode(
+                        baseProof.BATCH_TYPEHASH(),
+                        keccak256(abi.encodePacked(proofHashes)),
+                        dl2
+                    )
+                )
+            )
+        );
+        (uint8 v2, bytes32 r2, bytes32 s2) = vm.sign(verPrivateKey, digest);
+
+        vm.prank(user2);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IBaseProof.ProofAlreadySubmitted.selector,
+                existingHash
+            )
+        );
+        baseProof.submitProofBatch(proofHashes, metaHashes, dl2, v2, r2, s2);
+    }
+
     /*
     function test_RevertWhen_DuplicateProof() public {
         bytes32 proofHash = keccak256("test proof");
