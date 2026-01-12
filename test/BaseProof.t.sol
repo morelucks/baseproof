@@ -187,6 +187,31 @@ contract BaseProofTest is Test {
         baseProof.submitProofBatch(proofHashes, metaHashes, dl, v, r, s);
     }
 
+    function test_RevertWhen_EmptyBatch() public {
+        bytes32[] memory proofHashes = new bytes32[](0);
+        bytes32[] memory metaHashes = new bytes32[](0);
+        uint256 dl = block.timestamp + 100;
+
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                baseProof.DOMAIN_SEPARATOR(),
+                keccak256(
+                    abi.encode(
+                        baseProof.BATCH_TYPEHASH(),
+                        keccak256(abi.encodePacked(proofHashes)),
+                        dl
+                    )
+                )
+            )
+        );
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(verPrivateKey, digest);
+
+        vm.prank(user1);
+        vm.expectRevert(IBaseProof.EmptyBatch.selector);
+        baseProof.submitProofBatch(proofHashes, metaHashes, dl, v, r, s);
+    }
+
     /*
     function test_RevertWhen_DuplicateProof() public {
         bytes32 proofHash = keccak256("test proof");
