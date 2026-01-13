@@ -12,26 +12,23 @@ contract BaseProof is IBaseProof {
     mapping(address => bool) public isVerifier;
     bool public paused;
 
-    bytes32 public constant DOMAIN_TYPEHASH = keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
-    bytes32 public constant PROOF_TYPEHASH = keccak256("Proof(bytes32 proofHash,uint256 deadline)");
-    bytes32 public constant BATCH_TYPEHASH = keccak256("BatchProof(bytes32[] proofHashes,uint256 deadline)");
+    bytes32 public constant DOMAIN_TYPEHASH =
+        keccak256(
+            "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+        );
+    bytes32 public constant PROOF_TYPEHASH =
+        keccak256("Proof(bytes32 proofHash,uint256 deadline)");
+    bytes32 public constant BATCH_TYPEHASH =
+        keccak256("BatchProof(bytes32[] proofHashes,uint256 deadline)");
 
-    error ProofAlreadySubmitted(bytes32 proofHash);
-    error EmptyBatch();
-    error DuplicateInBatch(uint256 index);
-    error InvalidSignature();
-    error DeadlineExpired();
-    error Unauthorized();
-
-    event OwnershipTransferStarted(address indexed previousOwner, address indexed newOwner);
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-    event ProofSubmitted(address indexed user, bytes32 indexed proofHash, uint256 timestamp);
-    event ProofRevoked(bytes32 indexed proofHash, address indexed revoker);
-    event BatchProofSubmitted(address indexed user, uint256 count, uint256 timestamp);
-    event Paused(address account);
-    event Unpaused(address account);
-    event VerifierAdded(address indexed verifier);
-    event VerifierRemoved(address indexed verifier);
+    event OwnershipTransferStarted(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
 
     struct ProofData {
         bool submitted;
@@ -99,16 +96,30 @@ contract BaseProof is IBaseProof {
     }
 
     function revokeProof(bytes32 proofHash) external {
-        if (msg.sender != owner && !isVerifier[msg.sender]) revert Unauthorized();
+        if (msg.sender != owner && !isVerifier[msg.sender])
+            revert Unauthorized();
         ProofData storage data = proofData[proofHash];
         if (!data.submitted) revert Unauthorized();
         data.revoked = true;
         emit ProofRevoked(proofHash, msg.sender);
     }
 
-    function submitProof(bytes32 proofHash, bytes32 metadataHash, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external whenNotPaused {
+    function submitProof(
+        bytes32 proofHash,
+        bytes32 metadataHash,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external whenNotPaused {
         if (block.timestamp > deadline) revert DeadlineExpired();
-        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR(), keccak256(abi.encode(PROOF_TYPEHASH, proofHash, deadline))));
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                DOMAIN_SEPARATOR(),
+                keccak256(abi.encode(PROOF_TYPEHASH, proofHash, deadline))
+            )
+        );
         _verifySignature(digest, v, r, s);
 
         ProofData storage data = proofData[proofHash];
@@ -126,9 +137,28 @@ contract BaseProof is IBaseProof {
         emit ProofSubmitted(msg.sender, proofHash, currentTimestamp);
     }
 
-    function submitProofBatch(bytes32[] calldata proofHashes, bytes32[] calldata metadataHashes, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external whenNotPaused {
+    function submitProofBatch(
+        bytes32[] calldata proofHashes,
+        bytes32[] calldata metadataHashes,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external whenNotPaused {
         if (block.timestamp > deadline) revert DeadlineExpired();
-        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR(), keccak256(abi.encode(BATCH_TYPEHASH, keccak256(abi.encodePacked(proofHashes)), deadline))));
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                DOMAIN_SEPARATOR(),
+                keccak256(
+                    abi.encode(
+                        BATCH_TYPEHASH,
+                        keccak256(abi.encodePacked(proofHashes)),
+                        deadline
+                    )
+                )
+            )
+        );
         _verifySignature(digest, v, r, s);
 
         uint256 length = proofHashes.length;
@@ -164,12 +194,32 @@ contract BaseProof is IBaseProof {
         return proofData[proofHash].revoked;
     }
 
-    function getProofData(bytes32 proofHash) external view returns (bool submitted, bool revoked, uint128 timestamp, uint128 userIndex, bytes32 metadataHash) {
+    function getProofData(
+        bytes32 proofHash
+    )
+        external
+        view
+        returns (
+            bool submitted,
+            bool revoked,
+            uint128 timestamp,
+            uint128 userIndex,
+            bytes32 metadataHash
+        )
+    {
         ProofData memory data = proofData[proofHash];
-        return (data.submitted, data.revoked, data.timestamp, data.userIndex, data.metadataHash);
+        return (
+            data.submitted,
+            data.revoked,
+            data.timestamp,
+            data.userIndex,
+            data.metadataHash
+        );
     }
 
-    function getProofMetadata(bytes32 proofHash) external view returns (bytes32) {
+    function getProofMetadata(
+        bytes32 proofHash
+    ) external view returns (bytes32) {
         return proofData[proofHash].metadataHash;
     }
 
@@ -178,11 +228,26 @@ contract BaseProof is IBaseProof {
     }
 
     function DOMAIN_SEPARATOR() public view returns (bytes32) {
-        return keccak256(abi.encode(DOMAIN_TYPEHASH, keccak256(bytes("BaseProof")), keccak256(bytes("1")), block.chainid, address(this)));
+        return
+            keccak256(
+                abi.encode(
+                    DOMAIN_TYPEHASH,
+                    keccak256(bytes("BaseProof")),
+                    keccak256(bytes("1")),
+                    block.chainid,
+                    address(this)
+                )
+            );
     }
 
-    function _verifySignature(bytes32 digest, uint8 v, bytes32 r, bytes32 s) internal view {
+    function _verifySignature(
+        bytes32 digest,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) internal view {
         address recoveredSigner = ecrecover(digest, v, r, s);
-        if (recoveredSigner == address(0) || !isVerifier[recoveredSigner]) revert InvalidSignature();
+        if (recoveredSigner == address(0) || !isVerifier[recoveredSigner])
+            revert InvalidSignature();
     }
 }

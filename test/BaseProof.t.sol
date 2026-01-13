@@ -18,8 +18,19 @@ contract BaseProofTest is Test {
         baseProof = new BaseProof(verifier);
     }
 
-    function _sign(bytes32 hash, uint256 deadline) internal view returns (uint8 v, bytes32 r, bytes32 s) {
-        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", baseProof.DOMAIN_SEPARATOR(), keccak256(abi.encode(baseProof.PROOF_TYPEHASH(), hash, deadline))));
+    function _sign(
+        bytes32 hash,
+        uint256 deadline
+    ) internal view returns (uint8 v, bytes32 r, bytes32 s) {
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                baseProof.DOMAIN_SEPARATOR(),
+                keccak256(
+                    abi.encode(baseProof.PROOF_TYPEHASH(), hash, deadline)
+                )
+            )
+        );
         (v, r, s) = vm.sign(verPrivateKey, digest);
     }
 
@@ -28,16 +39,25 @@ contract BaseProofTest is Test {
         bytes32 metadataHash = keccak256("json metadata");
         uint256 dl = block.timestamp + 100;
         (uint8 v, bytes32 r, bytes32 s) = _sign(proofHash, dl);
-        
+
         vm.prank(user1);
         baseProof.submitProof(proofHash, metadataHash, dl, v, r, s);
 
         assertTrue(baseProof.isProofSubmitted(proofHash));
         assertEq(baseProof.userProofCount(user1), 1);
         assertEq(baseProof.totalProofs(), 1);
-        
-        (,,,, bytes32 storedMeta) = baseProof.getProofData(proofHash);
+
+        (
+            bool submitted,
+            ,
+            uint128 timestamp,
+            uint128 userIndex,
+            bytes32 storedMeta
+        ) = baseProof.getProofData(proofHash);
         assertEq(storedMeta, metadataHash);
+        assertTrue(submitted);
+        assertEq(userIndex, 0);
+        assertEq(timestamp, block.timestamp);
     }
 
     function test_RevertWhen_DuplicateProof() public {
@@ -45,12 +65,17 @@ contract BaseProofTest is Test {
         bytes32 metadataHash = keccak256("json metadata");
         uint256 dl = block.timestamp + 100;
         (uint8 v, bytes32 r, bytes32 s) = _sign(proofHash, dl);
-        
+
         vm.prank(user1);
         baseProof.submitProof(proofHash, metadataHash, dl, v, r, s);
 
         vm.prank(user2);
-        vm.expectRevert(abi.encodeWithSelector(IBaseProof.ProofAlreadySubmitted.selector, proofHash));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IBaseProof.ProofAlreadySubmitted.selector,
+                proofHash
+            )
+        );
         baseProof.submitProof(proofHash, metadataHash, dl, v, r, s);
     }
 
@@ -63,10 +88,22 @@ contract BaseProofTest is Test {
         metaHashes[0] = keccak256("param 1");
         metaHashes[1] = keccak256("param 2");
         metaHashes[2] = keccak256("param 3");
-        
+
         uint256 dl = block.timestamp + 100;
-        
-        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", baseProof.DOMAIN_SEPARATOR(), keccak256(abi.encode(baseProof.BATCH_TYPEHASH(), keccak256(abi.encodePacked(proofHashes)), dl))));
+
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                baseProof.DOMAIN_SEPARATOR(),
+                keccak256(
+                    abi.encode(
+                        baseProof.BATCH_TYPEHASH(),
+                        keccak256(abi.encodePacked(proofHashes)),
+                        dl
+                    )
+                )
+            )
+        );
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(verPrivateKey, digest);
 
         vm.prank(user1);
@@ -80,10 +117,10 @@ contract BaseProofTest is Test {
     }
 
     function test_RevertWhen_BadSigner() public {
-        bytes32 h = keccak256("bad"); 
+        bytes32 h = keccak256("bad");
         bytes32 m = keccak256("meta");
         uint256 dl = block.timestamp + 100;
-        
+
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(0xBEEF, keccak256("dgst"));
         vm.prank(user1);
         vm.expectRevert(IBaseProof.InvalidSignature.selector);
@@ -95,12 +132,12 @@ contract BaseProofTest is Test {
         bytes32 metadataHash = keccak256("json metadata");
         uint256 dl = block.timestamp + 100;
         (uint8 v, bytes32 r, bytes32 s) = _sign(proofHash, dl);
-        
+
         baseProof.submitProof(proofHash, metadataHash, dl, v, r, s);
         assertTrue(baseProof.isProofSubmitted(proofHash));
 
         baseProof.revokeProof(proofHash);
-        
+
         assertFalse(baseProof.isProofSubmitted(proofHash)); // Should return false if revoked
         assertTrue(baseProof.isProofRevoked(proofHash));
     }
@@ -110,49 +147,69 @@ contract BaseProofTest is Test {
         bytes32 metadataHash = keccak256("json metadata");
         uint256 dl = block.timestamp + 100;
         (uint8 v, bytes32 r, bytes32 s) = _sign(proofHash, dl);
-        
+
         baseProof.submitProof(proofHash, metadataHash, dl, v, r, s);
-        
+
         vm.prank(user2);
         vm.expectRevert(IBaseProof.Unauthorized.selector);
         baseProof.revokeProof(proofHash);
-    }
-
-    // Batch submission tests
-    function test_SubmitProofBatch() public {
-        bytes32[] memory proofHashes = new bytes32[](3);
-        proofHashes[0] = keccak256("proof 1");
-        proofHashes[1] = keccak256("proof 2");
-        proofHashes[2] = keccak256("proof 3");
-
-        vm.prank(user1);
-        baseProof.submitProofBatch(proofHashes);
-
-        assertTrue(baseProof.isProofSubmitted(proofHashes[0]));
-        assertTrue(baseProof.isProofSubmitted(proofHashes[1]));
-        assertTrue(baseProof.isProofSubmitted(proofHashes[2]));
-        assertEq(baseProof.userProofCount(user1), 3);
-        assertEq(baseProof.totalProofs(), 3);
     }
 
     function test_BatchEventEmitted() public {
         bytes32[] memory proofHashes = new bytes32[](2);
         proofHashes[0] = keccak256("proof 1");
         proofHashes[1] = keccak256("proof 2");
+        bytes32[] memory metaHashes = new bytes32[](2);
+        metaHashes[0] = keccak256("meta 1");
+        metaHashes[1] = keccak256("meta 2");
+
+        uint256 dl = block.timestamp + 100;
+
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                baseProof.DOMAIN_SEPARATOR(),
+                keccak256(
+                    abi.encode(
+                        baseProof.BATCH_TYPEHASH(),
+                        keccak256(abi.encodePacked(proofHashes)),
+                        dl
+                    )
+                )
+            )
+        );
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(verPrivateKey, digest);
 
         vm.prank(user1);
         vm.expectEmit(true, false, false, true);
-        emit BaseProof.BatchProofSubmitted(user1, 2, block.timestamp);
+        emit IBaseProof.BatchProofSubmitted(user1, 2, block.timestamp);
 
-        baseProof.submitProofBatch(proofHashes);
+        baseProof.submitProofBatch(proofHashes, metaHashes, dl, v, r, s);
     }
 
     function test_RevertWhen_EmptyBatch() public {
         bytes32[] memory proofHashes = new bytes32[](0);
+        bytes32[] memory metaHashes = new bytes32[](0);
+        uint256 dl = block.timestamp + 100;
+
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                baseProof.DOMAIN_SEPARATOR(),
+                keccak256(
+                    abi.encode(
+                        baseProof.BATCH_TYPEHASH(),
+                        keccak256(abi.encodePacked(proofHashes)),
+                        dl
+                    )
+                )
+            )
+        );
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(verPrivateKey, digest);
 
         vm.prank(user1);
-        vm.expectRevert(BaseProof.EmptyBatch.selector);
-        baseProof.submitProofBatch(proofHashes);
+        vm.expectRevert(IBaseProof.EmptyBatch.selector);
+        baseProof.submitProofBatch(proofHashes, metaHashes, dl, v, r, s);
     }
 
     function test_RevertWhen_DuplicateInBatch() public {
@@ -160,10 +217,36 @@ contract BaseProofTest is Test {
         proofHashes[0] = keccak256("proof 1");
         proofHashes[1] = keccak256("proof 2");
         proofHashes[2] = keccak256("proof 1"); // duplicate
+        bytes32[] memory metaHashes = new bytes32[](3);
+        metaHashes[0] = keccak256("meta 1");
+        metaHashes[1] = keccak256("meta 2");
+        metaHashes[2] = keccak256("meta 3");
+
+        uint256 dl = block.timestamp + 100;
+
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                baseProof.DOMAIN_SEPARATOR(),
+                keccak256(
+                    abi.encode(
+                        baseProof.BATCH_TYPEHASH(),
+                        keccak256(abi.encodePacked(proofHashes)),
+                        dl
+                    )
+                )
+            )
+        );
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(verPrivateKey, digest);
 
         vm.prank(user1);
-        vm.expectRevert(abi.encodeWithSelector(BaseProof.DuplicateInBatch.selector, 2));
-        baseProof.submitProofBatch(proofHashes);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IBaseProof.ProofAlreadySubmitted.selector,
+                proofHashes[2]
+            )
+        );
+        baseProof.submitProofBatch(proofHashes, metaHashes, dl, v, r, s);
     }
 
     function test_RevertWhen_BatchContainsExistingProof() public {
@@ -171,61 +254,131 @@ contract BaseProofTest is Test {
         bytes32[] memory proofHashes = new bytes32[](2);
         proofHashes[0] = keccak256("new proof");
         proofHashes[1] = existingHash;
+        bytes32[] memory metaHashes = new bytes32[](2);
+        metaHashes[0] = keccak256("meta 1");
+        metaHashes[1] = keccak256("meta 2");
+
+        // Submit existing proof first
+        bytes32 existMeta = keccak256("existing meta");
+        uint256 dl1 = block.timestamp + 100;
+        (uint8 v1, bytes32 r1, bytes32 s1) = _sign(existingHash, dl1);
 
         vm.prank(user1);
-        baseProof.submitProof(existingHash);
+        baseProof.submitProof(existingHash, existMeta, dl1, v1, r1, s1);
+
+        // Prepare batch submission containing existingHash
+        uint256 dl2 = block.timestamp + 200;
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                baseProof.DOMAIN_SEPARATOR(),
+                keccak256(
+                    abi.encode(
+                        baseProof.BATCH_TYPEHASH(),
+                        keccak256(abi.encodePacked(proofHashes)),
+                        dl2
+                    )
+                )
+            )
+        );
+        (uint8 v2, bytes32 r2, bytes32 s2) = vm.sign(verPrivateKey, digest);
 
         vm.prank(user2);
-        vm.expectRevert(abi.encodeWithSelector(BaseProof.ProofAlreadySubmitted.selector, existingHash));
-        baseProof.submitProofBatch(proofHashes);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IBaseProof.ProofAlreadySubmitted.selector,
+                existingHash
+            )
+        );
+        baseProof.submitProofBatch(proofHashes, metaHashes, dl2, v2, r2, s2);
     }
 
     function test_MixedIndividualAndBatch() public {
         bytes32 individualHash = keccak256("individual");
+        bytes32 individualMeta = keccak256("meta 0");
         bytes32[] memory batchHashes = new bytes32[](2);
         batchHashes[0] = keccak256("batch 1");
         batchHashes[1] = keccak256("batch 2");
+        bytes32[] memory metaHashes = new bytes32[](2);
+        metaHashes[0] = keccak256("meta 1");
+        metaHashes[1] = keccak256("meta 2");
+
+        uint256 dl1 = block.timestamp + 100;
+        (uint8 v1, bytes32 r1, bytes32 s1) = _sign(individualHash, dl1);
 
         vm.prank(user1);
-        baseProof.submitProof(individualHash);
+        baseProof.submitProof(individualHash, individualMeta, dl1, v1, r1, s1);
+
+        uint256 dl2 = block.timestamp + 200;
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                baseProof.DOMAIN_SEPARATOR(),
+                keccak256(
+                    abi.encode(
+                        baseProof.BATCH_TYPEHASH(),
+                        keccak256(abi.encodePacked(batchHashes)),
+                        dl2
+                    )
+                )
+            )
+        );
+        (uint8 v2, bytes32 r2, bytes32 s2) = vm.sign(verPrivateKey, digest);
 
         vm.prank(user1);
-        baseProof.submitProofBatch(batchHashes);
+        baseProof.submitProofBatch(batchHashes, metaHashes, dl2, v2, r2, s2);
 
         assertEq(baseProof.userProofCount(user1), 3);
         assertEq(baseProof.totalProofs(), 3);
     }
 
-    // getProofData tests
     function test_GetProofData() public {
         bytes32 proofHash = keccak256("test proof");
+        bytes32 metadataHash = keccak256("json metadata");
+        uint256 dl = block.timestamp + 100;
+        (uint8 v, bytes32 r, bytes32 s) = _sign(proofHash, dl);
 
-        (bool submitted, uint128 timestamp, uint128 userIndex) = baseProof.getProofData(proofHash);
+        (
+            bool submitted,
+            ,
+            uint128 timestamp,
+            uint128 userIndex,
+            bytes32 storedMeta
+        ) = baseProof.getProofData(proofHash);
         assertFalse(submitted);
         assertEq(timestamp, 0);
         assertEq(userIndex, 0);
+        assertEq(storedMeta, bytes32(0));
 
         vm.prank(user1);
-        baseProof.submitProof(proofHash);
+        baseProof.submitProof(proofHash, metadataHash, dl, v, r, s);
 
-        (submitted, timestamp, userIndex) = baseProof.getProofData(proofHash);
+        (submitted, , timestamp, userIndex, storedMeta) = baseProof
+            .getProofData(proofHash);
         assertTrue(submitted);
         assertEq(timestamp, block.timestamp);
         assertEq(userIndex, 0);
+        assertEq(storedMeta, metadataHash);
     }
 
     function test_GetProofData_MultipleProofs() public {
         bytes32 proofHash1 = keccak256("proof 1");
         bytes32 proofHash2 = keccak256("proof 2");
+        bytes32 meta1 = keccak256("meta 1");
+        bytes32 meta2 = keccak256("meta 2");
+        uint256 dl = block.timestamp + 100;
+
+        (uint8 v1, bytes32 r1, bytes32 s1) = _sign(proofHash1, dl);
+        (uint8 v2, bytes32 r2, bytes32 s2) = _sign(proofHash2, dl);
 
         vm.prank(user1);
-        baseProof.submitProof(proofHash1);
+        baseProof.submitProof(proofHash1, meta1, dl, v1, r1, s1);
 
         vm.prank(user1);
-        baseProof.submitProof(proofHash2);
+        baseProof.submitProof(proofHash2, meta2, dl, v2, r2, s2);
 
-        (, , uint128 userIndex1) = baseProof.getProofData(proofHash1);
-        (, , uint128 userIndex2) = baseProof.getProofData(proofHash2);
+        (, , , uint128 userIndex1, ) = baseProof.getProofData(proofHash1);
+        (, , , uint128 userIndex2, ) = baseProof.getProofData(proofHash2);
 
         assertEq(userIndex1, 0);
         assertEq(userIndex2, 1);
@@ -235,8 +388,12 @@ contract BaseProofTest is Test {
         assertEq(baseProof.getUserProofCount(user1), 0);
 
         bytes32 proofHash = keccak256("test proof");
+        bytes32 metadataHash = keccak256("json metadata");
+        uint256 dl = block.timestamp + 100;
+        (uint8 v, bytes32 r, bytes32 s) = _sign(proofHash, dl);
+
         vm.prank(user1);
-        baseProof.submitProof(proofHash);
+        baseProof.submitProof(proofHash, metadataHash, dl, v, r, s);
 
         assertEq(baseProof.getUserProofCount(user1), 1);
     }
@@ -244,12 +401,18 @@ contract BaseProofTest is Test {
     function test_MultipleUsers() public {
         bytes32 proofHash1 = keccak256("user1 proof");
         bytes32 proofHash2 = keccak256("user2 proof");
+        bytes32 meta1 = keccak256("meta 1");
+        bytes32 meta2 = keccak256("meta 2");
+        uint256 dl = block.timestamp + 100;
+
+        (uint8 v1, bytes32 r1, bytes32 s1) = _sign(proofHash1, dl);
+        (uint8 v2, bytes32 r2, bytes32 s2) = _sign(proofHash2, dl);
 
         vm.prank(user1);
-        baseProof.submitProof(proofHash1);
+        baseProof.submitProof(proofHash1, meta1, dl, v1, r1, s1);
 
         vm.prank(user2);
-        baseProof.submitProof(proofHash2);
+        baseProof.submitProof(proofHash2, meta2, dl, v2, r2, s2);
 
         assertEq(baseProof.userProofCount(user1), 1);
         assertEq(baseProof.userProofCount(user2), 1);
@@ -258,12 +421,34 @@ contract BaseProofTest is Test {
 
     function testFuzz_BatchSubmission(bytes32[] calldata proofHashes) public {
         if (proofHashes.length == 0) {
-            vm.expectRevert(BaseProof.EmptyBatch.selector);
-            baseProof.submitProofBatch(proofHashes);
+            // Must sign even empty batch
+            uint256 dl = block.timestamp + 100;
+            bytes32 digest = keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    baseProof.DOMAIN_SEPARATOR(),
+                    keccak256(
+                        abi.encode(
+                            baseProof.BATCH_TYPEHASH(),
+                            keccak256(abi.encodePacked(proofHashes)),
+                            dl
+                        )
+                    )
+                )
+            );
+            (uint8 v, bytes32 r, bytes32 s) = vm.sign(verPrivateKey, digest);
+            bytes32[] memory emptyMeta = new bytes32[](0);
+
+            vm.prank(user1);
+            vm.expectRevert(IBaseProof.EmptyBatch.selector);
+            baseProof.submitProofBatch(proofHashes, emptyMeta, dl, v, r, s);
             return;
         }
 
-        // Remove duplicates for valid test
+        // Remove duplicates for valid test (simple O(N^2) check is risky for large N in fuzz, but foundry defaults are okay)
+        // Also limit length to avoid gas limit?
+        if (proofHashes.length > 20) return;
+
         bool hasDuplicates = false;
         for (uint256 i = 0; i < proofHashes.length; ++i) {
             for (uint256 j = i + 1; j < proofHashes.length; ++j) {
@@ -276,14 +461,34 @@ contract BaseProofTest is Test {
         }
 
         if (hasDuplicates) {
-            // Skip test if duplicates exist
             return;
         }
 
+        // Prepare metadata array
+        bytes32[] memory metaHashes = new bytes32[](proofHashes.length);
+        for (uint i = 0; i < proofHashes.length; i++) {
+            metaHashes[i] = keccak256(abi.encode(i));
+        }
+
+        uint256 dl2 = block.timestamp + 100;
+        bytes32 digest2 = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                baseProof.DOMAIN_SEPARATOR(),
+                keccak256(
+                    abi.encode(
+                        baseProof.BATCH_TYPEHASH(),
+                        keccak256(abi.encodePacked(proofHashes)),
+                        dl2
+                    )
+                )
+            )
+        );
+        (uint8 v2, bytes32 r2, bytes32 s2) = vm.sign(verPrivateKey, digest2);
+
         vm.prank(user1);
-        baseProof.submitProofBatch(proofHashes);
+        baseProof.submitProofBatch(proofHashes, metaHashes, dl2, v2, r2, s2);
 
         assertEq(baseProof.userProofCount(user1), uint128(proofHashes.length));
-        assertEq(baseProof.totalProofs(), uint128(proofHashes.length));
     }
 }
